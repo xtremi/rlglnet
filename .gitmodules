@@ -2,7 +2,7 @@
 	path = glfw-net
 	url = https://github.com/ForeverZer0/glfw-net.git
 [submodule "glfw"]
-	path = glfw
+	path = glfw/glfw-src
 	url = https://github.com/glfw/glfw.git
 [submodule "glmnet"]
 	path = glmnet

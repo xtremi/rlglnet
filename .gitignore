@@ -1,5 +1,7 @@
 .vs/
 
-glfw-net/
 bin/
 obj/
+
+glfw/glfw-install
+glfw/glfw-bin
