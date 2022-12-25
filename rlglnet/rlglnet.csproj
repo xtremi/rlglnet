@@ -15,11 +15,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GlmNet" Version="0.7.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\glfw-net\GLFW.NET\GLFW.NET.csproj" />
+    <ProjectReference Include="..\glmnet\source\GlmNet\GlmNet\GlmNet.csproj" />
   </ItemGroup>
 
 </Project>

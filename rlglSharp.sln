@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rlglnet", "rlglnet\rlglnet.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rlglGUI", "rlglGUI\rlglGUI.csproj", "{A31346AE-12B7-459E-AD71-11B6A9608A11}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlmNet", "glmnet\source\GlmNet\GlmNet\GlmNet.csproj", "{3C5E3C3A-DB59-4DBC-A195-0427350ECB1C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,14 @@ Global
 		{A31346AE-12B7-459E-AD71-11B6A9608A11}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A31346AE-12B7-459E-AD71-11B6A9608A11}.Release|x64.ActiveCfg = Release|Any CPU
 		{A31346AE-12B7-459E-AD71-11B6A9608A11}.Release|x64.Build.0 = Release|Any CPU
+		{3C5E3C3A-DB59-4DBC-A195-0427350ECB1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C5E3C3A-DB59-4DBC-A195-0427350ECB1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C5E3C3A-DB59-4DBC-A195-0427350ECB1C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3C5E3C3A-DB59-4DBC-A195-0427350ECB1C}.Debug|x64.Build.0 = Debug|Any CPU
+		{3C5E3C3A-DB59-4DBC-A195-0427350ECB1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C5E3C3A-DB59-4DBC-A195-0427350ECB1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C5E3C3A-DB59-4DBC-A195-0427350ECB1C}.Release|x64.ActiveCfg = Release|Any CPU
+		{3C5E3C3A-DB59-4DBC-A195-0427350ECB1C}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
