@@ -2,6 +2,7 @@
 
 bin/
 obj/
+output/
 
 glfw/glfw-install
 glfw/glfw-bin
