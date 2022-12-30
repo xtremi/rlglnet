@@ -1,0 +1,50 @@
+﻿
+<Window x:Class="rlglGUIwpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:rlglGUIwpf"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="229">
+
+    <Window.Resources>
+        <!-- Standard button style-->
+        <Style x:Key="StdButtonStyle" >
+            <Setter Property="Button.Width" Value="100"/>
+            <Setter Property="Button.Margin" Value="0,0,0,4" />
+            <Setter Property="Button.VerticalAlignment" Value="Top"/>
+            <Setter Property="Button.HorizontalAlignment" Value="Left"/>
+        </Style>
+        <!-- Standard slider style-->
+        <Style x:Key="StdSliderStyle" >
+            <Setter Property="Slider.Width" Value="100"/>
+            <Setter Property="Slider.Margin" Value="0,0,0,4" />
+            <Setter Property="Slider.VerticalAlignment" Value="Top"/>
+            <Setter Property="Slider.HorizontalAlignment" Value="Left"/>
+        </Style>
+    </Window.Resources>
+
+
+    <Grid Margin="10,10" VerticalAlignment="Top">
+
+        <Grid.RowDefinitions>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+
+
+        <Button x:Name="btn1" Style="{StaticResource StdButtonStyle}"
+            Grid.Row="0" Content="Start 1" Click="OnClickButtonStart"/>
+        <Button x:Name="btn2" Style="{StaticResource StdButtonStyle}"
+            Grid.Row="1" Content="Start 2"/>
+        <Button x:Name="btn3" Style="{StaticResource StdButtonStyle}"
+            Grid.Row="2" Content="Start 3"/>
+        <Slider x:Name="slider" Style="{StaticResource StdSliderStyle}"
+            Grid.Row="3" VerticalAlignment="Top"/>
+    </Grid>
+</Window>
+
+    
