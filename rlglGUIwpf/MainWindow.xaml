@@ -19,9 +19,10 @@
         <!-- Standard slider style-->
         <Style x:Key="StdSliderStyle" >
             <Setter Property="Slider.Width" Value="100"/>
-            <Setter Property="Slider.Margin" Value="0,0,0,4" />
-            <Setter Property="Slider.VerticalAlignment" Value="Top"/>
-            <Setter Property="Slider.HorizontalAlignment" Value="Left"/>
+            <Setter Property="Slider.Maximum" Value="100"/>
+            <Setter Property="Slider.TickPlacement" Value="BottomRight"/>
+            <Setter Property="Slider.TickFrequency" Value="5"/>
+            <Setter Property="Slider.IsSnapToTickEnabled" Value="True"/>
         </Style>
     </Window.Resources>
 
@@ -42,8 +43,20 @@
             Grid.Row="1" Content="Start 2"/>
         <Button x:Name="btn3" Style="{StaticResource StdButtonStyle}"
             Grid.Row="2" Content="Start 3"/>
-        <Slider x:Name="slider" Style="{StaticResource StdSliderStyle}"
-            Grid.Row="3" VerticalAlignment="Top"/>
+
+        <DockPanel VerticalAlignment="Center" Margin="10" Grid.Row="3">
+            <Slider x:Name="slider1" Style="{StaticResource StdSliderStyle}"
+                ValueChanged="onSliderValueChanged_slider1"/>
+
+            <TextBox Text="{Binding ElementName=slider1, 
+                Path=Value, UpdateSourceTrigger=PropertyChanged}" 
+                TextAlignment="Right" Width="40"/>
+        </DockPanel>
+
+
+
+
+
     </Grid>
 </Window>
 

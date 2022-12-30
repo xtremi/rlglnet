@@ -76,5 +76,10 @@ namespace rlglGUIwpf
         }
 
 
+        void onSliderValueChanged_slider1(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            Color color = Color.FromRgb((byte)slider1.Value, (byte)slider1.Value, (byte)slider1.Value);
+            this.Background = new SolidColorBrush(color);
+        }
     }
 }
