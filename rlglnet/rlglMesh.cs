@@ -1,43 +1,73 @@
-﻿using static OpenGL.Gl;
-using GlmNet;
+﻿using GlmNet;
 using System;
+using static OpenGL.Gl;
 
 namespace rlglnet
 {
     class rlglMesh
     {
-        /// <summary>
-        /// Creates a VBO and VAO to store the vertices for a triangle.
-        /// </summary>
-        /// <param name="vao">The created vertex array object for the triangle.</param>
-        /// <param name="vbo">The created vertex buffer object for the triangle.</param>
-        public unsafe void createMesh(out uint vao, out uint vbo, int nNodesPerEdge, float size)
+        public uint VAO { get; private set; }
+        public uint VBO_D { get; private set; }
+        public uint VBO_S { get; private set; }
+        public unsafe void createMesh(int nNodesPerEdge, float size)
         {
 
-            VertexData[] vertices = createVertexArray(nNodesPerEdge, size);
-            vao = glGenVertexArray();
-            vbo = glGenBuffer();
+            VertexDataStatic[] vertexDataStatic = CreateRectangularMesh(nNodesPerEdge, size);
+            VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightData_flat(nNodesPerEdge, size);
+            VAO = glGenVertexArray();
+            VBO_S = glGenBuffer();
+            VBO_D = glGenBuffer();
 
-            glBindVertexArray(vao);
+            glBindVertexArray(VAO);
 
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            fixed (VertexData* v = &vertices[0])
+            glBindBuffer(GL_ARRAY_BUFFER, VBO_S);
+            fixed (VertexDataStatic* v = &vertexDataStatic[0])
             {
-                glBufferData(GL_ARRAY_BUFFER, sizeof(VertexData) * vertices.Length, v, GL_STATIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(VertexData) * vertexDataStatic.Length, v, GL_STATIC_DRAW);
+            }
+            glBindBuffer(GL_ARRAY_BUFFER, VBO_D);
+            fixed (VertexDataDynamic* v = &vertexDataDynamic[0])
+            {
+                glBufferData(GL_ARRAY_BUFFER, sizeof(VertexDataStatic) * vertexDataDynamic.Length, v, GL_DYNAMIC_DRAW);
             }
 
-            glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(VertexData), NULL);
+            glBindBuffer(GL_ARRAY_BUFFER, VBO_S);
+
+            //position xy
+            glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(VertexDataStatic), NULL);
             glEnableVertexAttribArray(0);
-            glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(VertexData), NULL);
+            //color rgb
+            glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(VertexDataStatic), NULL);
             glEnableVertexAttribArray(1);
-            glVertexAttribPointer(2, 3, GL_FLOAT, false, sizeof(VertexData), NULL);
+            //texture uv
+            glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(VertexDataStatic), NULL);
             glEnableVertexAttribArray(2);
-            glVertexAttribPointer(3, 3, GL_FLOAT, false, sizeof(VertexData), NULL);
+
+            glBindBuffer(GL_ARRAY_BUFFER, VBO_D);
+            //pos z
+            glVertexAttribPointer(3, 1, GL_FLOAT, false, sizeof(VertexDataDynamic), NULL);
             glEnableVertexAttribArray(3);
-            glVertexAttribPointer(4, 2, GL_FLOAT, false, sizeof(VertexData), NULL);
+            //normal xyz
+            glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(VertexDataDynamic), NULL);
             glEnableVertexAttribArray(4);
+            //tangent xyz
+            glVertexAttribPointer(5, 3, GL_FLOAT, false, sizeof(VertexDataDynamic), NULL);
+            glEnableVertexAttribArray(5);
         }
 
+        struct VertexDataStatic
+        {
+            public vec2 posXY;
+            public vec3 color;
+            public vec2 uv;
+        }
+
+        struct VertexDataDynamic
+        {
+            public float posZ;
+            public vec3 normal;
+            public vec3 tangent;
+        }
 
         struct VertexData
         {
@@ -48,7 +78,68 @@ namespace rlglnet
             public vec2 uv;
         }
 
-        VertexData[] createVertexArray(int nNodesPerEdge, float size)
+        private VertexDataDynamic[] CreateRectangularMeshHeightData_flat(int nNodesPerEdge, float height)
+        {
+            int elementsPerEdge = nNodesPerEdge - 1;
+            VertexDataDynamic[] vertData = new VertexDataDynamic[elementsPerEdge * elementsPerEdge * 6];
+            for (int i = 0; i < vertData.Length; i++)
+            {
+                vertData[i].posZ = height;
+                vertData[i].normal = new vec3(0.0f, 0.0f, 1.0f);
+                vertData[i].tangent = new vec3(0.0f, 0.0f, 1.0f);
+            }
+            return vertData;
+        }
+        private VertexDataStatic[] CreateRectangularMesh(int nNodesPerEdge, float size)
+        {
+            int elementsPerEdge = nNodesPerEdge - 1;
+            VertexDataStatic[] vertData = new VertexDataStatic[elementsPerEdge * elementsPerEdge * 6];
+
+            vec2 startPos = new vec2(-0.5f * size, -0.5f * size);
+            vec2 cornerPos = startPos;
+
+            float elSize = size / (float)elementsPerEdge;
+            vec2[] elNodeOffsets = new vec2[] {
+                new vec2(0.0f,   0.0f),
+                new vec2(elSize, 0.0f),
+                new vec2(0.0f,   elSize),
+                new vec2(elSize, 0.0f),
+                new vec2(elSize, elSize),
+                new vec2(0.0f,   elSize)
+            };
+            vec2[] uvCoords = new vec2[]
+            {
+                new vec2(0.0f, 0.0f),
+                new vec2(1.0f, 0.0f),
+                new vec2(0.0f, 1.0f),
+                new vec2(1.0f, 0.0f),
+                new vec2(1.0f, 1.0f),
+                new vec2(0.0f, 1.0f),
+            };
+
+            vec3 color = new vec3(1.0f, 0.0f, 0.0f);
+
+            int index = 0;
+            for (int i = 0; i < elementsPerEdge; i++)
+            {
+                for (int j = 0; j < elementsPerEdge; j++)
+                {
+                    for (int k = 0; k < 6; k++)
+                    {
+                        vec2 pos = cornerPos + elNodeOffsets[k];
+                        vertData[index + k].posXY = pos;
+                        vertData[index + k].color = color;
+                        vertData[index + k].uv = uvCoords[k];
+                    }
+                    cornerPos.x += elSize;
+                }
+                cornerPos.x = startPos.x;
+                cornerPos.y += elSize;
+            }
+            return vertData;
+        }
+
+        private VertexData[] CreateVertexArray_test(int nNodesPerEdge, float size)
         {
             int elementsPerEdge = nNodesPerEdge - 1;
             VertexData[] vertData = new VertexData[elementsPerEdge * elementsPerEdge * 6];
