@@ -5,6 +5,7 @@ using System.Diagnostics;
 using GLFW;
 using GlmNet;
 using static OpenGL.Gl;
+using OpenGL;
 
 namespace rlglnet
 {
@@ -62,6 +63,14 @@ namespace rlglnet
             windowCenter = windowSize / 2.0f;
             CreateWindow((int)windowSize.x, (int)windowSize.y);
             WindowFocusCallback = (glfwWindow, focused) => OnWindowFocus(glfwWindow, focused);
+
+            //glEnable(GL_BLEND);
+           glEnable(GL_DEPTH_TEST);
+           //glDepthMask(true)   ;
+           //glDepthFunc(GL_LEQUAL);
+           //glDepthRange(0.0f, 1.0f);
+           glEnable(GL_CULL_FACE);
+           glEnable(GL_FRONT);
 
             Glfw.SetWindowFocusCallback(
                 window, WindowFocusCallback);
@@ -157,7 +166,8 @@ namespace rlglnet
             }
 
             // Clear the framebuffer to defined background color
-            glClear(GL_COLOR_BUFFER_BIT);
+            //glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             if (frameCounter++ % 600 == 0)
             {
