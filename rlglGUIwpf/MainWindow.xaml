@@ -6,15 +6,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:rlglGUIwpf"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="229">
+        Title="MainWindow" Height="450" Width="300">
 
     <Window.Resources>
         <!-- Standard button style-->
         <Style x:Key="StdButtonStyle" >
-            <Setter Property="Button.Width" Value="100"/>
-            <Setter Property="Button.Margin" Value="0,0,0,4" />
-            <Setter Property="Button.VerticalAlignment" Value="Top"/>
-            <Setter Property="Button.HorizontalAlignment" Value="Left"/>
         </Style>
         <!-- Standard slider style-->
         <Style x:Key="StdSliderStyle" >
@@ -24,38 +20,63 @@
             <Setter Property="Slider.TickFrequency" Value="5"/>
             <Setter Property="Slider.IsSnapToTickEnabled" Value="True"/>
         </Style>
+
+        <ControlTemplate x:Key="MySlider" TargetType="Label">
+            <StackPanel 
+                Orientation="Horizontal">
+                <ContentPresenter Width="50"/>
+                <Slider Width="100" Style="{StaticResource StdSliderStyle}"></Slider>
+                <TextBox Width="40"></TextBox>
+            </StackPanel>
+        </ControlTemplate>
+
     </Window.Resources>
 
 
     <Grid Margin="10,10" VerticalAlignment="Top">
 
         <Grid.RowDefinitions>
-            <RowDefinition></RowDefinition>
-            <RowDefinition></RowDefinition>
-            <RowDefinition></RowDefinition>
-            <RowDefinition></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="120"></RowDefinition>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <Button x:Name="flat" Style="{StaticResource StdButtonStyle}"
+                Content="Flat mesh" Click="OnClickFlatMesh"/>
+            <Button x:Name="sine" Style="{StaticResource StdButtonStyle}"
+               Content="Sine mesh" Click="OnClickSineMesh"/>
+            <Button x:Name="planeWave" Style="{StaticResource StdButtonStyle}"
+                Content="Plane wave mesh" Click="OnClickPlaneWaveMesh"/>
+ 
+
+            <DockPanel VerticalAlignment="Center" Margin="10">
+                <Slider x:Name="slider1" Style="{StaticResource StdSliderStyle}"
+                    ValueChanged="onSliderValueChanged_slider1"/>
+
+                <TextBox Text="{Binding ElementName=slider1, 
+                    Path=Value, UpdateSourceTrigger=PropertyChanged}" 
+                    TextAlignment="Right" Width="40"/>
+            </DockPanel>
+
+            <Label Template="{StaticResource MySlider}">Value 1</Label>
+            <Label Template="{StaticResource MySlider}">Value 2</Label>
+            <Label Template="{StaticResource MySlider}">Height</Label>
+            <Label Template="{StaticResource MySlider}">X</Label>
 
 
-        <Button x:Name="btn1" Style="{StaticResource StdButtonStyle}"
-            Grid.Row="0" Content="Start 1" Click="OnClickButtonStart"/>
-        <Button x:Name="btn2" Style="{StaticResource StdButtonStyle}"
-            Grid.Row="1" Content="Start 2"/>
-        <Button x:Name="btn3" Style="{StaticResource StdButtonStyle}"
-            Grid.Row="2" Content="Start 3"/>
+        </StackPanel>
 
-        <DockPanel VerticalAlignment="Center" Margin="10" Grid.Row="3">
-            <Slider x:Name="slider1" Style="{StaticResource StdSliderStyle}"
-                ValueChanged="onSliderValueChanged_slider1"/>
-
-            <TextBox Text="{Binding ElementName=slider1, 
-                Path=Value, UpdateSourceTrigger=PropertyChanged}" 
-                TextAlignment="Right" Width="40"/>
-        </DockPanel>
-
-
-
-
+        <TextBox Grid.Row="1"
+            Grid.ColumnSpan="2"
+            x:Name="textBox"
+            Height="100"
+            Width="auto"
+            Margin="0,0,0,0"
+            Text="TextBox" TextWrapping="Wrap" />
 
     </Grid>
 </Window>

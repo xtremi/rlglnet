@@ -7,13 +7,31 @@ namespace rlglnet
 
     class CameraControl
     {
-        static float KEY_MOVE_SPEED = 0.055f;
+        public CameraControl(vec2 windowCenterPos) => WindowCenterPos = windowCenterPos;
+
+        static float KEY_MOVE_SPEED = 0.150f;
         static float MOUSE_MOVE_SPEED = 0.15f;
+
+        float Yaw   = 0.0f;
+        float Pitch = 0.0f;
+        vec2 WindowCenterPos;
+        public bool off { private get; set; }
+
+        class MouseData
+        {
+            public vec2 prevPos;
+            public vec2 offset;
+            public bool firstMovement = true;
+        }
+        MouseData mouse = new MouseData();
+
 
         public void process(ref Camera cam, Window window, vec2 mousePos)
         {
-            processKeyEvents(ref cam, window);
-            processMouseMovement(ref cam, mousePos);
+            if (!off) { 
+                processKeyEvents(ref cam, window);
+                processMouseMovement(ref cam, mousePos);
+            }
         }
 
 
@@ -37,38 +55,30 @@ namespace rlglnet
             }
         }
 
-        class MouseData
-        {
-            public vec2 prevPos;
-            public vec2 offset;
-            public bool firstMovement = true;
 
-        }
-        MouseData mouse = new MouseData();
-        float yaw = 0.0f, pitch = 0.0f;
 
         void processMouseMovement(ref Camera cam, vec2 pos)
         {
             if (mouse.firstMovement)
             {
-                mouse.firstMovement = false;
-                mouse.prevPos = pos;
+                //mouse.firstMovement = false;
+                //mouse.prevPos = pos;
             }
-            mouse.offset.x = pos.x - mouse.prevPos.x;
-            mouse.offset.y = mouse.prevPos.y - pos.y;
+            mouse.offset.x = pos.x - WindowCenterPos.x;
+            mouse.offset.y = WindowCenterPos.y - pos.y;
             mouse.prevPos = pos;
 
             mouse.offset *= MOUSE_MOVE_SPEED;
 
-            yaw -= mouse.offset.x;
-            pitch += mouse.offset.y;
+            Yaw -= mouse.offset.x;
+            Pitch += mouse.offset.y;
 
-            pitch = Math.Clamp(pitch, -89.9f, 89.9f);
+            Pitch = Math.Clamp(Pitch, -89.9f, 89.9f);
 
             vec3 front;
-            front.x = glm.cos(glm.radians(yaw)) * glm.cos(glm.radians(pitch));
-            front.y = glm.sin(glm.radians(yaw)) * glm.cos(glm.radians(pitch));
-            front.z = glm.sin(glm.radians(pitch));
+            front.x = glm.cos(glm.radians(Yaw)) * glm.cos(glm.radians(Pitch));
+            front.y = glm.sin(glm.radians(Yaw)) * glm.cos(glm.radians(Pitch));
+            front.z = glm.sin(glm.radians(Pitch));
             cam.Front = glm.normalize(front);
         }
 

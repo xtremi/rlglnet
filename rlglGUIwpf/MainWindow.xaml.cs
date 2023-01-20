@@ -27,7 +27,7 @@ namespace rlglGUIwpf
         void RlglInit()
         {
             rlglBaseApp = new rlglnet.rlglBaseApp(); 
-            rlglBaseApp.InitWindow(new GlmNet.vec2(400, 200));
+            rlglBaseApp.InitWindow(new GlmNet.vec2(1080, 720));
             SizeChanged += MainWindowSizedChanged;
             LocationChanged += MainWindowMoved;
 
@@ -45,6 +45,27 @@ namespace rlglGUIwpf
             adjustGLFWwindowPosition();
         }
 
+
+        void OnClickFlatMesh(object sender, RoutedEventArgs e)
+        {
+            rlglBaseApp.SetFlatTerrain();
+        }
+        void OnClickSineMesh(object sender, RoutedEventArgs e)
+        {
+            rlglBaseApp.SetSineWaveTerrain(10.0f, 100.0f);
+
+        }
+        void OnClickPlaneWaveMesh(object sender, RoutedEventArgs e)
+        {
+            rlglBaseApp.SetPlaneWaveTerrain(10.0f, 100.0f);
+        }
+
+
+
+        void onSliderValueChanged_slider1(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            rlglBaseApp.SetPlaneWaveTerrain(10.0f, (float)slider1.Value);
+        }
 
         Point RealPixelsToWpf(Point p)
         {
@@ -68,18 +89,13 @@ namespace rlglGUIwpf
         private void RlglLoop(object sender, EventArgs e)
         {
             rlglBaseApp.loop();
+
+            double x, y;
+            GLFW.Glfw.GetCursorPosition(rlglBaseApp.window, out x, out y);
+            textBox.Text = x + ", " + y;
+
         }
 
-        void OnClickButtonStart(object sender, RoutedEventArgs e)
-        {
-            int tmp = 1;
-        }
 
-
-        void onSliderValueChanged_slider1(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            Color color = Color.FromRgb((byte)slider1.Value, (byte)slider1.Value, (byte)slider1.Value);
-            this.Background = new SolidColorBrush(color);
-        }
     }
 }

@@ -1,35 +1,70 @@
 ﻿using System;
 using System.IO;
+using System.Diagnostics;
+
 using GLFW;
 using GlmNet;
 using static OpenGL.Gl;
 
 namespace rlglnet
 {
-
     public class rlglBaseApp
     {
         private static Random rand;
 
+        public void SetFlatTerrain()
+        {
+            FlatSurfaceFunction surfaceFunction = new FlatSurfaceFunction();
+            surfaceFunction.Height = 0.0f;
+            mesh.UpdateMeshHeight(surfaceFunction);
+        }
+        public void SetSineWaveTerrain(float height, float waveLength)
+        {
+            SineSurfaceFunction surfaceFunction = new SineSurfaceFunction();
+            surfaceFunction.Amplitude = height;
+            surfaceFunction.WaveLength= waveLength;
+            mesh.UpdateMeshHeight(surfaceFunction);
+        }
+        public void SetPlaneWaveTerrain(float height, float waveLength)
+        {
+            PlaneWaveFunction surfaceFunction = new PlaneWaveFunction();
+            surfaceFunction.Amplitude = height;
+            surfaceFunction.WaveLength = waveLength;
+            mesh.UpdateMeshHeight(surfaceFunction);
+        }
+
+
         public Window window { get; private set; }
         private CameraControl cameraControl;
         private Camera camera;
+        private rlglMesh mesh;
 
-        int uniColLoc;
-        int uniVPMloc;
-        int uniLightPos;
+        int  uniColLoc;
+        int  uniVPMloc;
+        int  uniLightPos;
         long frameCounter = 0;
-        int totalNodes;
+        int  totalNodes;
+        vec2 windowCenter;
+
+        private FocusCallback WindowFocusCallback;
 
         public void InitWindow(vec2 windowSize)
         {
+            string logFile = "log.txt";
+            File.Delete(logFile);
+            Trace.Listeners.Add(new TextWriterTraceListener(logFile, "mainlog"));
+            Trace.AutoFlush = true;
+            Trace.WriteLine("rlglBaseApp::InitWindow");
+
             PrepareContext();
 
             //Window and cursor:
-            CreateWindow(1024, 800);
-            //IntPtr handle = window.handle;
-            Glfw.SetCursorPosition(window, windowSize.x / 2.0, windowSize.y / 2.0);
-            Glfw.SetInputMode(window, GLFW.InputMode.Cursor, (int)GLFW.CursorMode.Disabled);
+            windowCenter = windowSize / 2.0f;
+            CreateWindow((int)windowSize.x, (int)windowSize.y);
+            WindowFocusCallback = (glfwWindow, focused) => OnWindowFocus(glfwWindow, focused);
+
+            Glfw.SetWindowFocusCallback(
+                window, WindowFocusCallback);
 
             //Shader:
             uint program = CreateProgram();
@@ -38,25 +73,42 @@ namespace rlglnet
             uniLightPos = glGetUniformLocation(program, "uLightPos");
 
             //Mesh:
-            rlglMesh mesh = new rlglMesh();
-            uint VAO, VBO;
+            mesh = new rlglMesh();
             int nNodesPerEdge = 100;
             int totalElements = (nNodesPerEdge - 1) * (nNodesPerEdge - 1);
             totalNodes = totalElements * 6;
             float meshSize = 250.0f;
-            mesh.createMesh(out VAO, out VBO, nNodesPerEdge, meshSize);
+            mesh.initializeMesh(nNodesPerEdge, meshSize);
+            SetFlatTerrain();
 
             //color:
             rand = new Random();
             SetRandomColor(uniColLoc);
 
             //Camera:
-            cameraControl = new CameraControl();
+            cameraControl = new CameraControl(windowCenter);
             camera = new Camera(windowSize.x / windowSize.y, 45.0f, 0.1f, 1000.0f);
-            camera.CamPos = new vec3(0.0f, 0.0f, 20.0f);
-            camera.Front = new vec3(1.0f, 0.0f, -1.0f);
+            camera.CamPos = new vec3(-125.0f, -125.0f, 25.0f);
+            camera.Front = new vec3(1.0f, 1.0f, -1.0f);
             camera.Up = new vec3(0.0f, 0.0f, 1.0f);
 
+        }
+
+
+        private void OnWindowFocus(Window window, bool focused)
+        {
+            if (focused)
+            {
+                //int w, h;
+                //Glfw.GetWindowSize(window, out w, out h);
+                //Glfw.SetCursorPosition(window, (double)w / 2.0, (double)h / 2.0);
+                cameraControl.off = false;
+                Glfw.SetInputMode(window, GLFW.InputMode.Cursor, (int)GLFW.CursorMode.Hidden);
+            }
+            else
+            {
+                cameraControl.off = true;
+            }
         }
 
         public void Run() {
@@ -79,6 +131,9 @@ namespace rlglnet
             double mouseX, mouseY;
             Glfw.GetCursorPosition(window, out mouseX, out mouseY);
             cameraControl.process(ref camera, window, new vec2((float)mouseX, (float)mouseY));
+            
+            Glfw.SetCursorPosition(window, windowCenter.x, windowCenter.y);
+
             glUniformMatrix4fv(uniVPMloc, 1, false, camera.VPmatrix().to_array());
 
             float lightPosSpeed = 0.005f;
@@ -158,6 +213,8 @@ namespace rlglnet
 
         private unsafe uint CreateShader(int type, string source)
         {
+            //Trace.WriteLine("rlglBaseApp::CreateShader");
+
             var shader = glCreateShader(type);
             glShaderSource(shader, source);
             glCompileShader(shader);
@@ -167,7 +224,8 @@ namespace rlglnet
             if (arg == 0)
             {
                 string log = glGetShaderInfoLog(shader);
-                Console.WriteLine(log);
+                Trace.WriteLine("Error shader compilation");
+                Trace.WriteLine(log);
             }
 
             return shader;
