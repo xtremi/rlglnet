@@ -9,7 +9,7 @@ namespace rlglnet
     {
         public CameraControl(vec2 windowCenterPos) => WindowCenterPos = windowCenterPos;
 
-        static float KEY_MOVE_SPEED = 0.150f;
+        static float KEY_MOVE_SPEED = 0.550f;
         static float MOUSE_MOVE_SPEED = 0.15f;
 
         float Yaw   = 0.0f;

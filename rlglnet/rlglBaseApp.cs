@@ -33,7 +33,16 @@ namespace rlglnet
             surfaceFunction.WaveLength = waveLength;
             mesh.UpdateMeshHeight(surfaceFunction);
         }
-
+        public void SetSimplexNoiseTerrain(float amplitude, float frequency, int octaves, float persistance, float roughness)
+        {
+            SimplexNoise2Dfunction surfaceFunction = new SimplexNoise2Dfunction();
+            surfaceFunction.Amplitude = amplitude;
+            surfaceFunction.Frequency = frequency;
+            surfaceFunction.Octaves = octaves;
+            surfaceFunction.Persistance = persistance;
+            surfaceFunction.Roughness = roughness;
+            mesh.UpdateMeshHeight(surfaceFunction);
+        }
 
         public Window window { get; private set; }
         private CameraControl cameraControl;
@@ -45,6 +54,7 @@ namespace rlglnet
         int  uniLightPos;
         long frameCounter = 0;
         int  totalNodes;
+        int  totalElements;
         vec2 windowCenter;
 
         private FocusCallback WindowFocusCallback;
@@ -64,11 +74,7 @@ namespace rlglnet
             CreateWindow((int)windowSize.x, (int)windowSize.y);
             WindowFocusCallback = (glfwWindow, focused) => OnWindowFocus(glfwWindow, focused);
 
-            //glEnable(GL_BLEND);
            glEnable(GL_DEPTH_TEST);
-           //glDepthMask(true)   ;
-           //glDepthFunc(GL_LEQUAL);
-           //glDepthRange(0.0f, 1.0f);
            glEnable(GL_CULL_FACE);
            glEnable(GL_FRONT);
 
@@ -83,8 +89,8 @@ namespace rlglnet
 
             //Mesh:
             mesh = new rlglMesh();
-            int nNodesPerEdge = 100;
-            int totalElements = (nNodesPerEdge - 1) * (nNodesPerEdge - 1);
+            int nNodesPerEdge = 300;
+            totalElements = (nNodesPerEdge - 1) * (nNodesPerEdge - 1);
             totalNodes = totalElements * 6;
             float meshSize = 250.0f;
             mesh.initializeMesh(nNodesPerEdge, meshSize);
@@ -127,7 +133,6 @@ namespace rlglnet
             {
                 loop();
             }
-
             Glfw.Terminate();
         }
 
@@ -175,7 +180,10 @@ namespace rlglnet
             }
 
             // Draw the triangle.
-            glDrawArrays(GL_TRIANGLES, 0, totalNodes);
+            //glDrawArrays(GL_TRIANGLES, 0, totalNodes);
+            unsafe { 
+                glDrawElements(GL_TRIANGLES, totalElements * 6, GL_UNSIGNED_INT, Gl.NULL);
+            }
         }
 
         private void PrepareContext()

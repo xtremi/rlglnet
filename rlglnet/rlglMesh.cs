@@ -5,15 +5,12 @@ using System.Runtime.InteropServices;
 
 namespace rlglnet
 {
-
-    
-
-
     class rlglMesh
     {
         public uint VAO { get; private set; }
         public uint VBO_D { get; private set; }
         public uint VBO_S { get; private set; }
+        public uint EBO_S { get; private set; }
 
         private float _sizeXY;
         private int   _nNodesPerEdge;
@@ -23,13 +20,13 @@ namespace rlglnet
             _sizeXY = size;
             _nNodesPerEdge = nNodesPerEdge;
 
-            int a = sizeof(VertexDataStatic);
-            int b = sizeof(VertexDataDynamic);
-
-            VertexDataStatic[] vertexDataStatic = CreateRectangularMesh();
+            //VertexDataStatic[] vertexDataStatic = CreateRectangularMesh();
+            VertexDataStatic[] vertexDataStatic = CreateRectangularMeshIndexed();
+            int[] elementIndices = CreateRectangularMeshIndices();
             VAO = glGenVertexArray();
             VBO_S = glGenBuffer();
             VBO_D = glGenBuffer();
+            EBO_S = glGenBuffer();
             glBindVertexArray(VAO);
 
             glBindBuffer(GL_ARRAY_BUFFER, VBO_S);
@@ -38,12 +35,18 @@ namespace rlglnet
                 glBufferData(GL_ARRAY_BUFFER, sizeof(VertexDataStatic) * vertexDataStatic.Length, vs, GL_STATIC_DRAW);
             }
 
+            glBindBuffer(GL_ARRAY_BUFFER, EBO_S);
+            fixed (int* ei = &elementIndices[0])
+            {
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * elementIndices.Length, ei, GL_STATIC_DRAW);
+            }
+
             glBindBuffer(GL_ARRAY_BUFFER, VBO_S);
             //position xy
             glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(VertexDataStatic), NULL);
             glEnableVertexAttribArray(0);
             //texture uv
-            glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VertexDataStatic), NULL);
+            glVertexAttribPointer(1, 2, GL_FLOAT, false, sizeof(VertexDataStatic), (IntPtr)8);
             glEnableVertexAttribArray(1);
 
             glBindBuffer(GL_ARRAY_BUFFER, VBO_D);
@@ -51,13 +54,13 @@ namespace rlglnet
             glVertexAttribPointer(2, 1, GL_FLOAT, false, sizeof(VertexDataDynamic), NULL);
             glEnableVertexAttribArray(2);
             //color rgb
-            glVertexAttribPointer(3, 3, GL_FLOAT, false, sizeof(VertexDataDynamic), NULL);
+            glVertexAttribPointer(3, 3, GL_FLOAT, false, sizeof(VertexDataDynamic), (IntPtr)4);
             glEnableVertexAttribArray(3);
             //normal xyz
-            glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(VertexDataDynamic), NULL);
+            glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(VertexDataDynamic), (IntPtr)16);
             glEnableVertexAttribArray(4);
             //tangent xyz
-            glVertexAttribPointer(5, 3, GL_FLOAT, false, sizeof(VertexDataDynamic), NULL);
+            glVertexAttribPointer(5, 3, GL_FLOAT, false, sizeof(VertexDataDynamic), (IntPtr)28);
             glEnableVertexAttribArray(5);
         }
 
@@ -75,22 +78,10 @@ namespace rlglnet
 
         public unsafe void UpdateMeshHeight(ISurface3Dfunction surfaceFunction)
         {
-            VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightData(surfaceFunction);
+            TerrainColorFunction terrainFunction = new TerrainColorFunction();
+            VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightData(surfaceFunction, terrainFunction);
             UpdateDynamicBuffer(vertexDataDynamic);
         }
-
-        //public unsafe void SetFlatMesh(float posz)
-        //{
-        //    VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightData_flat(posz);
-        //    UpdateDynamicBuffer(vertexDataDynamic);
-        //}
-
-        //public unsafe void SetSineWaveMesh(float amplitude, float waveLength)
-        //{
-        //    VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightData_sineWave(amplitude, waveLength);
-        //    UpdateDynamicBuffer(vertexDataDynamic);
-        //}
-
 
         struct VertexDataStatic
         {
@@ -109,20 +100,9 @@ namespace rlglnet
 
 
 
-        private VertexDataDynamic[] CreateRectangularMeshHeightData_flat(float zpos)
-        {
-            int elementsPerEdge = _nNodesPerEdge - 1;
-            VertexDataDynamic[] vertData = new VertexDataDynamic[elementsPerEdge * elementsPerEdge * 6];
-            for (int i = 0; i < vertData.Length; i++)
-            {
-                vertData[i].posZ = zpos;
-                vertData[i].normal = new vec3(0.0f, 0.0f, 1.0f);
-                vertData[i].tangent = new vec3(0.0f, 0.0f, 1.0f);
-            }
-            return vertData;
-        }
-
-        private VertexDataDynamic[] CreateRectangularMeshHeightData(ISurface3Dfunction surfaceFunc)
+        private VertexDataDynamic[] CreateRectangularMeshHeightData(
+            ISurface3Dfunction surfaceFunc,
+            IColorFunction     colorFunc)
         {
             int elementsPerEdge = _nNodesPerEdge - 1;
             VertexDataDynamic[] vertData = new VertexDataDynamic[elementsPerEdge * elementsPerEdge * 6];
@@ -162,10 +142,14 @@ namespace rlglnet
                         {
                             cscale = 0.0f;
                         }
-                        vertData[index].color = new vec3(
-                            0.5f + 0.2f*cscale,
-                            1.0f - 0.8f*cscale,
-                            0.2f);
+                        float[] col = new float[3];
+                        colorFunc.Value(out col, cscale, normal.to_array());
+                        for (int c = 0; c < 3; c++) vertData[index].color[c] = col[c];
+
+                        //vertData[index].color = new vec3(
+                        //    0.5f + 0.5f * cscale,
+                        //    1.0f - 0.8f * cscale,
+                        //    1.0f - 0.5f * cscale);
                         vertData[index].normal = normal;
                         vertData[index++].tangent = tangent;
                     }
@@ -176,56 +160,6 @@ namespace rlglnet
             }
             return vertData;
         }
-
-        //private VertexDataDynamic[] CreateRectangularMeshHeightData_sineWave(float amplitude, float waveLength)
-        //{
-        //    int elementsPerEdge = _nNodesPerEdge - 1;
-        //    VertexDataDynamic[] vertData = new VertexDataDynamic[elementsPerEdge * elementsPerEdge * 6];
-        //    vec3[] vertPosition = new vec3[elementsPerEdge * elementsPerEdge * 6];
-
-        //    vec3 startPos = new vec3(-_sizeXY / 2.0f, -_sizeXY / 2.0f, 0.0f);
-        //    vec3 cornerPos = startPos;
-
-        //    float elSize = _sizeXY / (float)elementsPerEdge;
-        //    vec3[] elNodeOffsets = GetDualTriangleNodeOffsets3D(elSize);
-        //    vec2[] uvCoords = unitUVcoords;
-
-        //    vec3 tangent = new vec3(1.0f, 0.0f, 0.0f);  //should be calculated
-        //    vec3 color = new vec3(1.0f, 0.0f, 0.0f);
-        //    float sineK = 2.0f * (float)Math.PI / waveLength;
-
-        //    int index = 0;
-        //    for (int i = 0; i < elementsPerEdge; i++)
-        //    {
-        //        for (int j = 0; j < elementsPerEdge; j++)
-        //        {
-        //            for (int k = 0; k < 6; k++)
-        //            {
-        //                vertPosition[index + k] = cornerPos + elNodeOffsets[k];
-        //                vertPosition[index + k].z = amplitude * 
-        //                    glm.sin(sineK * vertPosition[index + k].x);
-        //            }
-        //            /* 1 2 3 4 5 6 - 1*/
-        //            vec3 p1 = vertPosition[index];
-        //            vec3 dir1 = glm.normalize(vertPosition[index + 1] - p1);
-        //            vec3 dir2 = glm.normalize(vertPosition[index + 2] - p1);
-        //            vec3 normal = glm.normalize(glm.cross(dir1, dir2));
-        //            for (int k = 0; k < 6; k++)
-        //            {
-        //                vertData[index].posZ = vertPosition[index].z;
-        //                vertData[index].normal = normal;
-        //                vertData[index++].tangent = tangent;
-        //            }
-        //            cornerPos.x += elSize;
-        //        }
-        //        cornerPos.x = startPos.x;
-        //        cornerPos.y += elSize;
-        //    }
-        //    return vertData;
-        //}
-
-        
-
 
         /*!
          
@@ -293,114 +227,63 @@ namespace rlglnet
             new vec2(0.0f, 1.0f),
         };
 
+       private int[] CreateRectangularMeshIndices()
+        {
+            int elementsPerEdge = _nNodesPerEdge - 1;
+            int[] vertdata = new int[elementsPerEdge * elementsPerEdge * 6];
 
+            int vertIndex = 0;
+            int elIndex = 0;
 
-        //struct vertexData
-        //{
-        //    public vec3 pos;
-        //    public vec3 normal;
-        //    public vec3 tangent;
-        //    public vec3 color;
-        //    public vec2 uv;
-        //}
+            for (int i = 0; i < elementsPerEdge; i++)
+            {
+                for (int j = 0; j < elementsPerEdge; j++)
+                {
+                    int[] localQuadIndices = {
+                        vertIndex,
+                        vertIndex + 1,
+                        vertIndex + _nNodesPerEdge + 1,
+                        vertIndex + _nNodesPerEdge
+                    };
 
-        //public unsafe void createMesh(int nNodesPerEdge, float size)
-        //{
+                    vertdata[elIndex++] = localQuadIndices[0];
+                    vertdata[elIndex++] = localQuadIndices[1];
+                    vertdata[elIndex++] = localQuadIndices[2];
+                    vertdata[elIndex++] = localQuadIndices[0];
+                    vertdata[elIndex++] = localQuadIndices[2];
+                    vertdata[elIndex++] = localQuadIndices[3];
+                    vertIndex++;
+                }
+                vertIndex++;
+            }
 
-        //    VertexDataStatic[] vertexDataStatic = CreateRectangularMesh(nNodesPerEdge, size);
-        //    //VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightData_flat(nNodesPerEdge, 0.0f);
-        //    VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightData_sineWave(nNodesPerEdge, 10.0f, size);
-        //    VAO = glGenVertexArray();
-        //    VBO_S = glGenBuffer();
-        //    VBO_D = glGenBuffer();
+            return vertdata;
+        }
+        private VertexDataStatic[] CreateRectangularMeshIndexed()
+        {
+            int elementsPerEdge = _nNodesPerEdge - 1;
+            VertexDataStatic[] vertdata = new VertexDataStatic[_nNodesPerEdge * _nNodesPerEdge];
 
-        //    glBindVertexArray(VAO);
+            vec2 startPos = new vec2(-0.5f * _sizeXY);
+            vec2 cornerPos = startPos;
 
-        //    glBindBuffer(GL_ARRAY_BUFFER, VBO_S);
-        //    fixed (VertexDataStatic* vs = &vertexDataStatic[0])
-        //    {
-        //        glBufferData(GL_ARRAY_BUFFER, sizeof(VertexDataStatic) * vertexDataStatic.Length, vs, GL_STATIC_DRAW);
-        //    }
-        //    glBindBuffer(GL_ARRAY_BUFFER, VBO_D);
-        //    fixed (VertexDataDynamic* vd = &vertexDataDynamic[0])
-        //    {
-        //        glBufferData(GL_ARRAY_BUFFER, sizeof(VertexDataDynamic) * vertexDataDynamic.Length, vd, GL_DYNAMIC_DRAW);
-        //    }
+            float elsize = _sizeXY / (float)elementsPerEdge;
 
-        //    glBindBuffer(GL_ARRAY_BUFFER, VBO_S);
-        //    //position xy
-        //    glVertexAttribPointer(0, 2, GL_FLOAT, false, sizeof(VertexDataStatic), NULL);
-        //    glEnableVertexAttribArray(0);
-        //    //color rgb
-        //    glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(VertexDataStatic), NULL);
-        //    glEnableVertexAttribArray(1);
-        //    //texture uv
-        //    glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(VertexDataStatic), NULL);
-        //    glEnableVertexAttribArray(2);
-
-        //    glBindBuffer(GL_ARRAY_BUFFER, VBO_D);
-        //    //pos z
-        //    glVertexAttribPointer(3, 1, GL_FLOAT, false, sizeof(VertexDataDynamic), NULL);
-        //    glEnableVertexAttribArray(3);
-        //    //normal xyz
-        //    glVertexAttribPointer(4, 3, GL_FLOAT, false, sizeof(VertexDataDynamic), NULL);
-        //    glEnableVertexAttribArray(4);
-        //    //tangent xyz
-        //    glVertexAttribPointer(5, 3, GL_FLOAT, false, sizeof(VertexDataDynamic), NULL);
-        //    glEnableVertexAttribArray(5);
-        //}
-
-        //private VertexData[] CreateVertexArray_test(int nNodesPerEdge, float size)
-        //{
-        //    int elementsPerEdge = nNodesPerEdge - 1;
-        //    VertexData[] vertData = new VertexData[elementsPerEdge * elementsPerEdge * 6];
-
-        //    vec3 startPos = new vec3(-size / 2.0f, -size / 2.0f, 0.0f);
-        //    vec3 cornerPos = startPos;
-
-        //    float elSize = size / (float)elementsPerEdge;
-        //    vec3[] elNodeOffsets = getDualTriangleNodeOffsets(elSize);
-        //    vec2[] uvCoords = unitUVcoords;
-
-        //    vec3 tangent = new vec3(1.0f, 0.0f, 0.0f);
-        //    vec3 color = new vec3(1.0f, 0.0f, 0.0f);
-
-        //    int index = 0;
-        //    for (int i = 0; i < elementsPerEdge; i++)
-        //    {
-
-        //        for (int j = 0; j < elementsPerEdge; j++)
-        //        {
-        //            for (int k = 0; k < 6; k++)
-        //            {
-        //                vec3 pos = cornerPos + elNodeOffsets[k];
-        //                pos.z = (size / 20.0f) * MathF.Pow(glm.sin(0.05f * (pos.x + pos.y)), 2.0f);
-        //                vertData[index + k].pos = pos;
-        //                vertData[index + k].tangent = tangent;
-        //                vertData[index + k].color = color;
-        //                vertData[index + k].uv = uvCoords[k];
-        //            }
-        //            /* 1 2 3 4 5 6 - 1*/
-        //            vec3 p1 = vertData[index].pos;
-        //            vec3 dir1 = glm.normalize(vertData[index + 1].pos - p1);
-        //            vec3 dir2 = glm.normalize(vertData[index + 2].pos - p1);
-        //            vec3 normal = glm.normalize(glm.cross(dir1, dir2));
-        //            for (int k = 0; k < 6; k++)
-        //            {
-        //                vertData[index++].normal = normal;
-        //            }
-
-
-        //            cornerPos.x += elSize;
-        //        }
-        //        cornerPos.x = startPos.x;
-        //        cornerPos.y += elSize;
-        //    }
-
-
-        //    return vertData;
-        //}
-
+            int index = 0;
+            for (int i = 0; i < _nNodesPerEdge; i++)
+            {
+                for (int j = 0; j < _nNodesPerEdge; j++)
+                {
+                    vertdata[index].posXY = cornerPos;
+                    vertdata[index].uv = new vec2((float)j / (float)(_nNodesPerEdge - 1), (float)i / (float)(_nNodesPerEdge - 1));
+                    index++;
+                    cornerPos.x += elsize;
+                }
+                cornerPos.x = startPos.x;
+                cornerPos.y += elsize;
+            }
+            return vertdata;
+        }
         private VertexDataStatic[] CreateRectangularMesh()
         {
             int elementsPerEdge = _nNodesPerEdge - 1;
@@ -412,8 +295,6 @@ namespace rlglnet
             float elsize = _sizeXY / (float)elementsPerEdge;
             vec2[] elnodeoffsets = GetDualTriangleNodeOffsets2D(elsize);
             vec2[] uvcoords = unitUVcoords;
-
-            vec3 color = new vec3(1.0f, 0.0f, 0.0f);
 
             int index = 0;
             for (int i = 0; i < elementsPerEdge; i++)

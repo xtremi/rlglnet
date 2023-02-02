@@ -12,21 +12,25 @@ uniform mat4 uVPmat;
 uniform vec3 uLightPos;
 
 out vec3 vertColor;
+out vec3 fragPos;
+out vec3 oNormal;
 
 void main()
 {
     vec3 pos = vec3(posXY.x, posXY.y, posZ);
     gl_Position = uVPmat * vec4(pos, 1.0);
 
-    float distanceToLight = distance(pos.xyz, uLightPos);
+	fragPos = pos;
+	vertColor = color;
+	oNormal = normal;
+		
+    /*float distanceToLight = distance(pos.xyz, uLightPos);
     float distanceFactor = clamp(1.0 - distanceToLight/250.0, 0.2, 1.0);
     
     vec3 lightDir = normalize(uLightPos - pos);
-    float directionFactor = clamp(dot(normal, lightDir), 0.2, 1.0);
-    
-    float colorFactor = 0.3 + 0.7*directionFactor;// * 0.25*distanceFactor;
+    float directionFactor = clamp(dot(normal, lightDir), 0.2, 1.0); 
+    float colorFactor = 0.3 + 0.7*directionFactor;// * 0.25*distanceFactor;*/
 
-    //vertColor = colorFactor * uColor;
-    //vertColor = uColor;
-    vertColor = colorFactor * color;
-}
+    //vertColor = colorFactor * color;
+    
+} 

@@ -12,21 +12,28 @@
         <!-- Standard button style-->
         <Style x:Key="StdButtonStyle" >
         </Style>
-        <!-- Standard slider style-->
-        <Style x:Key="StdSliderStyle" >
-            <Setter Property="Slider.Width" Value="100"/>
-            <Setter Property="Slider.Maximum" Value="100"/>
-            <Setter Property="Slider.TickPlacement" Value="BottomRight"/>
-            <Setter Property="Slider.TickFrequency" Value="5"/>
-            <Setter Property="Slider.IsSnapToTickEnabled" Value="True"/>
-        </Style>
+       
 
-        <ControlTemplate x:Key="MySlider" TargetType="Label">
-            <StackPanel 
-                Orientation="Horizontal">
-                <ContentPresenter Width="50"/>
-                <Slider Width="100" Style="{StaticResource StdSliderStyle}"></Slider>
-                <TextBox Width="40"></TextBox>
+        <ControlTemplate x:Key="myslider" TargetType="Slider">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <Label
+                    Width="80"
+                    Content="{Binding RelativeSource={RelativeSource TemplatedParent},Path=Name,Mode=OneWay}"
+                    />
+
+                <Slider 
+                    Value="{Binding RelativeSource={RelativeSource TemplatedParent},Path=Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged,Delay=10}"
+                    Minimum="{Binding RelativeSource={RelativeSource TemplatedParent},Path=Minimum,Mode=OneWay}"
+                    Maximum="{Binding RelativeSource={RelativeSource TemplatedParent},Path=Maximum,Mode=OneWay}"
+                    IsSnapToTickEnabled="True"
+                    TickFrequency="1"
+                    Width="80"/>
+
+                <TextBox Width="100" 
+                    Text="{Binding RelativeSource={RelativeSource TemplatedParent}, 
+                    Path=Value,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged,Delay=10}">
+                </TextBox>
+
             </StackPanel>
         </ControlTemplate>
 
@@ -51,24 +58,27 @@
                Content="Sine mesh" Click="OnClickSineMesh"/>
             <Button x:Name="planeWave" Style="{StaticResource StdButtonStyle}"
                 Content="Plane wave mesh" Click="OnClickPlaneWaveMesh"/>
- 
+            <Button x:Name="simplexNoise" Style="{StaticResource StdButtonStyle}"
+                Content="Simplex Noise 2D" Click="OnClickSimplexNoise"/>
 
-            <DockPanel VerticalAlignment="Center" Margin="10">
-                <Slider x:Name="slider1" Style="{StaticResource StdSliderStyle}"
-                    ValueChanged="onSliderValueChanged_slider1"/>
-
-                <TextBox Text="{Binding ElementName=slider1, 
-                    Path=Value, UpdateSourceTrigger=PropertyChanged}" 
-                    TextAlignment="Right" Width="40"/>
-            </DockPanel>
-
-            <Label Template="{StaticResource MySlider}">Value 1</Label>
-            <Label Template="{StaticResource MySlider}">Value 2</Label>
-            <Label Template="{StaticResource MySlider}">Height</Label>
-            <Label Template="{StaticResource MySlider}">X</Label>
-
-
+            <Slider Template="{StaticResource myslider}" 
+                    Value="3" Name="Octaves" Minimum="0" Maximum="100"
+                    Thumb.DragCompleted="OnSimplexParamChanged"/>
+            <Slider Template="{StaticResource myslider}" 
+                    Value="1" Name="Freq" Minimum="0" Maximum="100"
+                    Thumb.DragCompleted="OnSimplexParamChanged"/>
+            <Slider Template="{StaticResource myslider}" 
+                    Value="10" Name="Amplitude" Minimum="0" Maximum="100"
+                    Thumb.DragCompleted="OnSimplexParamChanged"/>
+            <Slider Template="{StaticResource myslider}" 
+                    Value = "50" Name="Persistance" Minimum="0" Maximum="100"
+                    Thumb.DragCompleted="OnSimplexParamChanged"/>
+            <Slider Template="{StaticResource myslider}" 
+                    Value = "50" Name="Roughness" Minimum="0" Maximum="100"
+                    Thumb.DragCompleted="OnSimplexParamChanged"/>
+        
         </StackPanel>
+
 
         <TextBox Grid.Row="1"
             Grid.ColumnSpan="2"

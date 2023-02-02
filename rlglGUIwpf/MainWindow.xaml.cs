@@ -59,12 +59,21 @@ namespace rlglGUIwpf
         {
             rlglBaseApp.SetPlaneWaveTerrain(10.0f, 100.0f);
         }
-
-
-
-        void onSliderValueChanged_slider1(object sender, RoutedPropertyChangedEventArgs<double> e)
+        
+        void OnClickSimplexNoise(object sender, RoutedEventArgs e)
         {
-            rlglBaseApp.SetPlaneWaveTerrain(10.0f, (float)slider1.Value);
+            float amplitude = (float)Amplitude.Value;
+            float freq      = (float)Freq.Value / 1000.0f;
+            int octaves     = (int)Octaves.Value;
+            float persistance = 0.5f * (float)Persistance.Value / 50.0f;
+            float roughness = 2.0f * (float)Roughness.Value / 50.0f;
+            
+            rlglBaseApp.SetSimplexNoiseTerrain(amplitude, freq, octaves, persistance, roughness);
+        }
+
+        void OnSimplexParamChanged(object sender, RoutedEventArgs e)
+        {
+            OnClickSimplexNoise(sender, e);
         }
 
         Point RealPixelsToWpf(Point p)
