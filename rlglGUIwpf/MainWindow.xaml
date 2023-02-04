@@ -62,21 +62,27 @@
                 Content="Simplex Noise 2D" Click="OnClickSimplexNoise"/>
 
             <Slider Template="{StaticResource myslider}" 
-                    Value="3" Name="Octaves" Minimum="0" Maximum="100"
+                    Value="8" Name="Octaves" Minimum="0" Maximum="100"
                     Thumb.DragCompleted="OnSimplexParamChanged"/>
             <Slider Template="{StaticResource myslider}" 
-                    Value="1" Name="Freq" Minimum="0" Maximum="100"
+                    Value="11" Name="Freq" Minimum="0" Maximum="100"
                     Thumb.DragCompleted="OnSimplexParamChanged"/>
             <Slider Template="{StaticResource myslider}" 
-                    Value="10" Name="Amplitude" Minimum="0" Maximum="100"
+                    Value="42" Name="Amplitude" Minimum="0" Maximum="100"
                     Thumb.DragCompleted="OnSimplexParamChanged"/>
             <Slider Template="{StaticResource myslider}" 
-                    Value = "50" Name="Persistance" Minimum="0" Maximum="100"
+                    Value = "36" Name="Persistance" Minimum="0" Maximum="100"
                     Thumb.DragCompleted="OnSimplexParamChanged"/>
             <Slider Template="{StaticResource myslider}" 
                     Value = "50" Name="Roughness" Minimum="0" Maximum="100"
                     Thumb.DragCompleted="OnSimplexParamChanged"/>
-        
+            <Slider Template="{StaticResource myslider}" 
+                    Value = "0" Name="Offset__x" Minimum="-100" Maximum="100"
+                    Thumb.DragCompleted="OnSimplexParamChanged"/>
+            <Slider Template="{StaticResource myslider}" 
+                    Value = "0" Name="Offset__y" Minimum="-100" Maximum="100"
+                    Thumb.DragCompleted="OnSimplexParamChanged"/>
+
         </StackPanel>
 
 

@@ -20,26 +20,37 @@ namespace rlglnet
 
     class TerrainColorFunction : IColorFunction
     {
+        static vec3 COL_WATER = new vec3(0.0f, 0.0f, 1.0f);
+        static vec3 COL_GRASS = new vec3(0.0f, 1.0f, 0.0f);
+        static vec3 COL_DIRTH = new vec3(0.5f, 0.25f, 0.125f);
+        static vec3 COL_SNOW = new vec3(1.0f, 1.0f, 1.0f);
         public void Value(out vec3 color, float height, vec3 normal)
         {
 
-            if(height < 0.4f)
-            {
-                color = new vec3(0.0f, 0.0f, 1.0f);
-            }
-            else if (height < 0.85f)
-            {
-                color = new vec3(0.0f, 1.0f, 0.0f);
+            const float H_WATER = 0.125f;
+            const float H_GRASS = 0.85f;
+            const float NZ_DIRTH = 0.95f;
 
-                if (normal[2] < 0.75) 
-                {
-                    color = new vec3(0.5f, 0.25f, 0.125f);
-                }
+            float normZ = normal.z;
+
+            if(height <= H_WATER)
+            {
+                color = COL_WATER;
+            }
+            else if (height < H_GRASS)
+            {
+                float w = Math.Clamp(MathF.Pow(normZ, 5.0f), 0.0f, 1.0f);
+                color = (w) * COL_GRASS + (1.0f - w) * COL_DIRTH;
+
+                //if (normZ < NZ_DIRTH) 
+                //{
+                //    color = COL_DIRTH;
+                //}
 
             }
             else 
             {
-                color = new vec3(1.0f, 1.0f, 1.0f);
+                color = COL_SNOW;
             }
 
         }
@@ -133,7 +144,17 @@ namespace rlglnet
         public float Persistance { private get; set; }
         public override float Value(float x, float y)
         {
-            return Amplitude * (float)SimplexNoise.NoiseValue(x + Offset.x, y + Offset.y, Octaves, Frequency, Persistance, Roughness);
+            float noiseValue = (float)SimplexNoise.NoiseValue(x + Offset.x, y + Offset.y, Octaves, Frequency, Persistance, Roughness);
+
+
+            float powValue = 4.2f * (float)SimplexNoise.NoiseValue(x, y, 5, 0.002f, 0.5f, 2.0f);
+
+            noiseValue = MathF.Pow(noiseValue, powValue);
+            if (noiseValue < 0.1f) noiseValue = 0.1f + noiseValue * 0.05f;
+
+            noiseValue = MathF.Round(noiseValue * 40.0f) / 40.0f;
+
+            return Amplitude * noiseValue;
         }
         public override float Max()
         {
@@ -141,7 +162,7 @@ namespace rlglnet
         }
         public override float Min()
         {
-            return -Amplitude;
+            return 0.0f;
         }
     }
 

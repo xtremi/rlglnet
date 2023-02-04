@@ -33,7 +33,7 @@ namespace rlglnet
             surfaceFunction.WaveLength = waveLength;
             mesh.UpdateMeshHeight(surfaceFunction);
         }
-        public void SetSimplexNoiseTerrain(float amplitude, float frequency, int octaves, float persistance, float roughness)
+        public void SetSimplexNoiseTerrain(vec2 offset, float amplitude, float frequency, int octaves, float persistance, float roughness)
         {
             SimplexNoise2Dfunction surfaceFunction = new SimplexNoise2Dfunction();
             surfaceFunction.Amplitude = amplitude;
@@ -41,6 +41,7 @@ namespace rlglnet
             surfaceFunction.Octaves = octaves;
             surfaceFunction.Persistance = persistance;
             surfaceFunction.Roughness = roughness;
+            surfaceFunction.Offset = offset;
             mesh.UpdateMeshHeight(surfaceFunction);
         }
 

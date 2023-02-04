@@ -67,8 +67,9 @@ namespace rlglGUIwpf
             int octaves     = (int)Octaves.Value;
             float persistance = 0.5f * (float)Persistance.Value / 50.0f;
             float roughness = 2.0f * (float)Roughness.Value / 50.0f;
+            GlmNet.vec2 offset = new GlmNet.vec2((float)Offset__x.Value, (float)Offset__y.Value);
             
-            rlglBaseApp.SetSimplexNoiseTerrain(amplitude, freq, octaves, persistance, roughness);
+            rlglBaseApp.SetSimplexNoiseTerrain(offset, amplitude, freq, octaves, persistance, roughness);
         }
 
         void OnSimplexParamChanged(object sender, RoutedEventArgs e)
