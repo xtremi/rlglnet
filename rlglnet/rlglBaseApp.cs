@@ -53,8 +53,8 @@ namespace rlglnet
         int  uniVPMloc;
         int  uniLightPos;
         long frameCounter = 0;
-        int  totalNodes;
-        int  totalElements;
+        int totalNodesNotIndexed;
+        int  totalElementsIndexed;
         vec2 windowCenter;
 
         private FocusCallback WindowFocusCallback;
@@ -90,8 +90,8 @@ namespace rlglnet
             //Mesh:
             mesh = new rlglMesh();
             int nNodesPerEdge = 300;
-            totalElements = (nNodesPerEdge - 1) * (nNodesPerEdge - 1);
-            totalNodes = totalElements * 6;
+            totalElementsIndexed = (nNodesPerEdge - 1) * (nNodesPerEdge - 1);
+            totalNodesNotIndexed = totalElementsIndexed * 6;
             float meshSize = 250.0f;
             mesh.initializeMesh(nNodesPerEdge, meshSize);
             SetFlatTerrain();
@@ -180,9 +180,9 @@ namespace rlglnet
             }
 
             // Draw the triangle.
-            //glDrawArrays(GL_TRIANGLES, 0, totalNodes);
+            //glDrawArrays(GL_TRIANGLES, 0, totalNodesNotIndexed);
             unsafe { 
-                glDrawElements(GL_TRIANGLES, totalElements * 6, GL_UNSIGNED_INT, Gl.NULL);
+                glDrawElements(GL_TRIANGLES, totalElementsIndexed * 6, GL_UNSIGNED_INT, Gl.NULL);
             }
         }
 

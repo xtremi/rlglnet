@@ -35,7 +35,7 @@ namespace rlglnet
                 glBufferData(GL_ARRAY_BUFFER, sizeof(VertexDataStatic) * vertexDataStatic.Length, vs, GL_STATIC_DRAW);
             }
 
-            glBindBuffer(GL_ARRAY_BUFFER, EBO_S);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO_S);
             fixed (int* ei = &elementIndices[0])
             {
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * elementIndices.Length, ei, GL_STATIC_DRAW);
@@ -79,7 +79,8 @@ namespace rlglnet
         public unsafe void UpdateMeshHeight(ISurface3Dfunction surfaceFunction)
         {
             TerrainColorFunction terrainFunction = new TerrainColorFunction();
-            VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightData(surfaceFunction, terrainFunction);
+            //VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightData(surfaceFunction, terrainFunction);
+            VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightDataIndexed(surfaceFunction, terrainFunction);
             UpdateDynamicBuffer(vertexDataDynamic);
         }
 
@@ -143,7 +144,7 @@ namespace rlglnet
                             cscale = 0.0f;
                         }
                         float[] col = new float[3];
-                        colorFunc.Value(out col, cscale, normal.to_array());
+                        colorFunc.Value(out vertData[index].color, cscale, normal);
                         for (int c = 0; c < 3; c++) vertData[index].color[c] = col[c];
 
                         //vertData[index].color = new vec3(
@@ -160,6 +161,47 @@ namespace rlglnet
             }
             return vertData;
         }
+
+        private VertexDataDynamic[] CreateRectangularMeshHeightDataIndexed(
+            ISurface3Dfunction surfaceFunc,
+            IColorFunction colorFunc)
+        {
+            int elementsPerEdge = _nNodesPerEdge - 1;
+            VertexDataDynamic[] vertData = new VertexDataDynamic[_nNodesPerEdge * _nNodesPerEdge];
+            vec3[] vertPosition = new vec3[_nNodesPerEdge * _nNodesPerEdge];
+
+            vec3 startPos = new vec3(-_sizeXY / 2.0f, -_sizeXY / 2.0f, 0.0f);
+            vec3 cornerPos = startPos;
+
+            float elSize = _sizeXY / (float)elementsPerEdge;
+
+            vec3 tangent = new vec3(1.0f, 0.0f, 0.0f);  //should be calculated
+            vec3 color = new vec3(1.0f, 0.0f, 0.0f);
+
+            //Get all position coordinates:
+            int index = 0;
+            float dL = elSize / 10.0f;
+            for (int i = 0; i < _nNodesPerEdge; i++)
+            {
+                for (int j = 0; j < _nNodesPerEdge; j++)
+                {
+                    vertData[index].posZ = surfaceFunc.Value(cornerPos.x, cornerPos.y);
+                    vertData[index].normal = surfaceFunc.Normal(cornerPos.x, cornerPos.y, dL);
+                    vertData[index].tangent = tangent;
+
+                    float colorScale = surfaceFunc.NormalizeValue(vertData[index].posZ);
+                    colorFunc.Value(out vertData[index].color, colorScale, vertData[index].normal);
+                    index++;
+
+                    cornerPos.x += elSize;
+                }
+                cornerPos.x = startPos.x;
+                cornerPos.y += elSize;
+            }
+            return vertData;
+        }
+
+
 
         /*!
          
