@@ -12,21 +12,40 @@ namespace rlglnet
         public uint VBO_S { get; private set; }
         public uint EBO_S { get; private set; }
 
+        private vec3 _centerPos;
         private float _sizeXY;
         private int   _nNodesPerEdge;
+        private int totalNodesNotIndexed;
+        private int totalElementsIndexed;
 
-        public unsafe void initializeMesh(int nNodesPerEdge, float size)
+        public void draw()
         {
-            _sizeXY = size;
+            //glDrawArrays(GL_TRIANGLES, 0, totalNodesNotIndexed);
+            unsafe
+            {
+                glBindVertexArray(VAO);
+                glDrawElements(GL_TRIANGLES, totalElementsIndexed * 6, GL_UNSIGNED_INT, NULL);
+            }
+        }
+        public unsafe void initializeMesh(
+            int nNodesPerEdge, 
+            vec3 centerPos,
+            float size)
+        {
             _nNodesPerEdge = nNodesPerEdge;
+            _sizeXY = size;
+            _centerPos = centerPos;
+            totalElementsIndexed = (nNodesPerEdge - 1) * (nNodesPerEdge - 1);
+            totalNodesNotIndexed = totalElementsIndexed * 6;
 
             //VertexDataStatic[] vertexDataStatic = CreateRectangularMesh();
             VertexDataStatic[] vertexDataStatic = CreateRectangularMeshIndexed();
             int[] elementIndices = CreateRectangularMeshIndices();
             VAO = glGenVertexArray();
             VBO_S = glGenBuffer();
-            VBO_D = glGenBuffer();
             EBO_S = glGenBuffer();
+            VBO_D = glGenBuffer();
+
             glBindVertexArray(VAO);
 
             glBindBuffer(GL_ARRAY_BUFFER, VBO_S);
@@ -170,7 +189,8 @@ namespace rlglnet
             VertexDataDynamic[] vertData = new VertexDataDynamic[_nNodesPerEdge * _nNodesPerEdge];
             vec3[] vertPosition = new vec3[_nNodesPerEdge * _nNodesPerEdge];
 
-            vec3 startPos = new vec3(-_sizeXY / 2.0f, -_sizeXY / 2.0f, 0.0f);
+            vec3 startPos = _centerPos;
+            startPos -= new vec3(-_sizeXY / 2.0f, -_sizeXY / 2.0f, 0.0f);
             vec3 cornerPos = startPos;
 
             float elSize = _sizeXY / (float)elementsPerEdge;
@@ -198,7 +218,7 @@ namespace rlglnet
                 cornerPos.x = startPos.x;
                 cornerPos.y += elSize;
             }
-            return vertData;
+            return vertData; 
         }
 
 

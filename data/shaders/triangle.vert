@@ -9,6 +9,7 @@ layout (location = 5) in vec3 tangent;
 
 uniform vec3 uColor;
 uniform mat4 uVPmat;
+uniform mat4 uMmat;
 uniform vec3 uLightPos;
 
 out vec3 vertColor;
@@ -18,7 +19,7 @@ out vec3 oNormal;
 void main()
 {
     vec3 pos = vec3(posXY.x, posXY.y, posZ);
-    gl_Position = uVPmat * vec4(pos, 1.0);
+    gl_Position = uVPmat * uMmat * vec4(pos, 1.0);
 
 	fragPos = pos;
 	vertColor = color;

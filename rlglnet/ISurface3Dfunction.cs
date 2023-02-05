@@ -152,7 +152,6 @@ namespace rlglnet
             noiseValue = MathF.Pow(noiseValue, powValue);
             if (noiseValue < 0.1f) noiseValue = 0.1f + noiseValue * 0.05f;
 
-            noiseValue = MathF.Round(noiseValue * 40.0f) / 40.0f;
 
             return Amplitude * noiseValue;
         }

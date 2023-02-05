@@ -12,26 +12,32 @@ namespace rlglnet
     public class rlglBaseApp
     {
         private static Random rand;
-
+        private float meshBaseSize = 150.0f;
         public void SetFlatTerrain()
         {
             FlatSurfaceFunction surfaceFunction = new FlatSurfaceFunction();
             surfaceFunction.Height = 0.0f;
-            mesh.UpdateMeshHeight(surfaceFunction);
+            mesh1.UpdateMeshHeight(surfaceFunction);
+            mesh2.UpdateMeshHeight(surfaceFunction);
+            mesh3.UpdateMeshHeight(surfaceFunction);
         }
         public void SetSineWaveTerrain(float height, float waveLength)
         {
             SineSurfaceFunction surfaceFunction = new SineSurfaceFunction();
             surfaceFunction.Amplitude = height;
             surfaceFunction.WaveLength= waveLength;
-            mesh.UpdateMeshHeight(surfaceFunction);
+            mesh1.UpdateMeshHeight(surfaceFunction);
+            mesh2.UpdateMeshHeight(surfaceFunction);
+            mesh3.UpdateMeshHeight(surfaceFunction);
         }
         public void SetPlaneWaveTerrain(float height, float waveLength)
         {
             PlaneWaveFunction surfaceFunction = new PlaneWaveFunction();
             surfaceFunction.Amplitude = height;
             surfaceFunction.WaveLength = waveLength;
-            mesh.UpdateMeshHeight(surfaceFunction);
+            mesh1.UpdateMeshHeight(surfaceFunction);
+            mesh2.UpdateMeshHeight(surfaceFunction);
+            mesh3.UpdateMeshHeight(surfaceFunction);
         }
         public void SetSimplexNoiseTerrain(vec2 offset, float amplitude, float frequency, int octaves, float persistance, float roughness)
         {
@@ -42,16 +48,19 @@ namespace rlglnet
             surfaceFunction.Persistance = persistance;
             surfaceFunction.Roughness = roughness;
             surfaceFunction.Offset = offset;
-            mesh.UpdateMeshHeight(surfaceFunction);
+            mesh1.UpdateMeshHeight(surfaceFunction);
+            mesh2.UpdateMeshHeight(surfaceFunction);
+            mesh3.UpdateMeshHeight(surfaceFunction);
         }
 
         public Window window { get; private set; }
         private CameraControl cameraControl;
         private Camera camera;
-        private rlglMesh mesh;
+        private rlglMesh mesh1, mesh2, mesh3, mesh4;
 
         int  uniColLoc;
         int  uniVPMloc;
+        int  uniMloc;
         int  uniLightPos;
         long frameCounter = 0;
         int totalNodesNotIndexed;
@@ -75,9 +84,9 @@ namespace rlglnet
             CreateWindow((int)windowSize.x, (int)windowSize.y);
             WindowFocusCallback = (glfwWindow, focused) => OnWindowFocus(glfwWindow, focused);
 
-           glEnable(GL_DEPTH_TEST);
-           glEnable(GL_CULL_FACE);
-           glEnable(GL_FRONT);
+            glEnable(GL_DEPTH_TEST);
+            glEnable(GL_CULL_FACE);
+            glEnable(GL_FRONT);
 
             Glfw.SetWindowFocusCallback(
                 window, WindowFocusCallback);
@@ -86,15 +95,21 @@ namespace rlglnet
             uint program = CreateProgram();
             uniColLoc = glGetUniformLocation(program, "uColor");
             uniVPMloc = glGetUniformLocation(program, "uVPmat");
+            uniMloc = glGetUniformLocation(program, "uMmat");
             uniLightPos = glGetUniformLocation(program, "uLightPos");
 
             //Mesh:
-            mesh = new rlglMesh();
-            int nNodesPerEdge = 300;
-            totalElementsIndexed = (nNodesPerEdge - 1) * (nNodesPerEdge - 1);
-            totalNodesNotIndexed = totalElementsIndexed * 6;
-            float meshSize = 250.0f;
-            mesh.initializeMesh(nNodesPerEdge, meshSize);
+            mesh1 = new rlglMesh();
+            mesh2 = new rlglMesh();
+            mesh3 = new rlglMesh();
+            int nNodesPerEdge = 200;
+
+            vec3 pos1 = new vec3(0.0f, 0.0f * meshBaseSize, 0.0f);
+            vec3 pos2 = new vec3(0.0f, 1.0f * meshBaseSize, 0.0f);
+            vec3 pos3 = new vec3(0.0f, 2.0f * meshBaseSize, 0.0f);
+            mesh1.initializeMesh(nNodesPerEdge, pos1, meshBaseSize);
+            mesh2.initializeMesh(nNodesPerEdge, pos2, meshBaseSize);
+            mesh3.initializeMesh(nNodesPerEdge, pos3, meshBaseSize);
             SetFlatTerrain();
 
             //color:
@@ -104,10 +119,9 @@ namespace rlglnet
             //Camera:
             cameraControl = new CameraControl(windowCenter);
             camera = new Camera(windowSize.x / windowSize.y, 45.0f, 0.1f, 1000.0f);
-            camera.CamPos = new vec3(-125.0f, -125.0f, 25.0f);
+            camera.CamPos = new vec3(-meshBaseSize/2.0f, 3.0f* meshBaseSize/2.0f, 25.0f);
             camera.Front = new vec3(1.0f, 1.0f, -1.0f);
             camera.Up = new vec3(0.0f, 0.0f, 1.0f);
-
         }
 
 
@@ -149,6 +163,7 @@ namespace rlglnet
             
             Glfw.SetCursorPosition(window, windowCenter.x, windowCenter.y);
 
+           
             glUniformMatrix4fv(uniVPMloc, 1, false, camera.VPmatrix().to_array());
 
             float lightPosSpeed = 0.005f;
@@ -172,7 +187,6 @@ namespace rlglnet
             }
 
             // Clear the framebuffer to defined background color
-            //glClear(GL_COLOR_BUFFER_BIT);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             if (frameCounter++ % 600 == 0)
@@ -180,11 +194,19 @@ namespace rlglnet
                 SetRandomColor(uniColLoc);
             }
 
-            // Draw the triangle.
-            //glDrawArrays(GL_TRIANGLES, 0, totalNodesNotIndexed);
-            unsafe { 
-                glDrawElements(GL_TRIANGLES, totalElementsIndexed * 6, GL_UNSIGNED_INT, Gl.NULL);
-            }
+            mat4 modelM1 = new mat4(1.0f);
+            mat4 modelM2 = new mat4(1.0f);
+            mat4 modelM3 = new mat4(1.0f);
+            glm.translate(modelM1, new vec3(0.0f, 0.0f * meshBaseSize * 1.01f, 0.0f));
+            glm.translate(modelM2, new vec3(0.0f, 1.0f * meshBaseSize * 1.01f, 0.0f));
+            glm.translate(modelM3, new vec3(0.0f, 2.0f * meshBaseSize * 1.01f, 0.0f));
+
+            glUniformMatrix4fv(uniMloc, 1, false, modelM1.to_array());
+            mesh1.draw();
+            glUniformMatrix4fv(uniMloc, 1, false, modelM2.to_array());
+            mesh2.draw();
+            glUniformMatrix4fv(uniMloc, 1, false, modelM3.to_array());
+            mesh3.draw();
         }
 
         private void PrepareContext()
