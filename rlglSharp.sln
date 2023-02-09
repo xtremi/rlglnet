@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rlglnet", "rlglnet\rlglnet.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GlmNet", "glmnet\source\GlmNet\GlmNet\GlmNet.csproj", "{3C5E3C3A-DB59-4DBC-A195-0427350ECB1C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rlglGUIwpf", "rlglGUIwpf\rlglGUIwpf.csproj", "{453998EB-22A9-4DCD-AEDB-2772AD46A4F9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rlglGUIwpf", "rlglGUIwpf\rlglGUIwpf.csproj", "{453998EB-22A9-4DCD-AEDB-2772AD46A4F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test_rlglnet", "Test_rlglnet\Test_rlglnet.csproj", "{3D7FD302-0963-4C05-98B5-88D0C8F51D24}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +63,14 @@ Global
 		{453998EB-22A9-4DCD-AEDB-2772AD46A4F9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{453998EB-22A9-4DCD-AEDB-2772AD46A4F9}.Release|x64.ActiveCfg = Release|Any CPU
 		{453998EB-22A9-4DCD-AEDB-2772AD46A4F9}.Release|x64.Build.0 = Release|Any CPU
+		{3D7FD302-0963-4C05-98B5-88D0C8F51D24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D7FD302-0963-4C05-98B5-88D0C8F51D24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D7FD302-0963-4C05-98B5-88D0C8F51D24}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3D7FD302-0963-4C05-98B5-88D0C8F51D24}.Debug|x64.Build.0 = Debug|Any CPU
+		{3D7FD302-0963-4C05-98B5-88D0C8F51D24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D7FD302-0963-4C05-98B5-88D0C8F51D24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D7FD302-0963-4C05-98B5-88D0C8F51D24}.Release|x64.ActiveCfg = Release|Any CPU
+		{3D7FD302-0963-4C05-98B5-88D0C8F51D24}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

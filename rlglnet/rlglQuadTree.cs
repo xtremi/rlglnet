@@ -6,20 +6,20 @@ using System.Text;
 namespace rlglnet
 {
 
-    class rlglQuadTreeElement : IEnumerator { 
-        GlmNet.vec3 _center;
-        int _level;
+    public class rlglQuadTreeElement { 
+        public GlmNet.vec3 Center { get; private set; }
+        public int Level { get; private set; }
         rlglQuadTree _quadTree;
 
         public rlglQuadTreeElement(rlglQuadTree quadTree, GlmNet.vec3 center, int level)
         {
             _quadTree = quadTree;
-            _center = center;
-            _level = level;
+            Center = center;
+            Level = level;
         }
         public float size()
         {
-            return _quadTree._totalSize / (float)(_level + 1);
+            return _quadTree._totalSize / (float)(Level + 1);
         }
         protected rlglQuadTreeElement[] children = null;
 
@@ -27,59 +27,60 @@ namespace rlglnet
         public bool isSplit(){
             return children != null; 
         }
+
+        public void splitIfNear(GlmNet.vec3 pos, ref List<rlglQuadTreeElement> quads)
+        {
+            if(Level >= _quadTree._maxSubdivisions)
+            {
+                return;
+            }
+            
+            if(GlmNet.glm.distance(pos, Center) < size())
+            {
+                split();
+                foreach(rlglQuadTreeElement quad in children)
+                {
+                    quad.splitIfNear(pos, ref quads);
+                }
+            }
+            else
+            {
+                quads.Add(this);
+            }
+
+        }
         public void split()
         {
             float childrenSize = size() / 2.0f;
             children = new rlglQuadTreeElement[4]
             {
-                new rlglQuadTreeElement(_quadTree, _center + childrenSize * new GlmNet.vec3(-1.0f, -1.0f, 0.0f), _level + 1),
-                new rlglQuadTreeElement(_quadTree, _center + childrenSize * new GlmNet.vec3( 1.0f, -1.0f, 0.0f), _level + 1),
-                new rlglQuadTreeElement(_quadTree, _center + childrenSize * new GlmNet.vec3( 1.0f,  1.0f, 0.0f), _level + 1),
-                new rlglQuadTreeElement(_quadTree, _center + childrenSize * new GlmNet.vec3(-1.0f,  1.0f, 0.0f), _level + 1)
+                new rlglQuadTreeElement(_quadTree, Center + 0.5f * childrenSize * new GlmNet.vec3(-1.0f, -1.0f, 0.0f), Level + 1),
+                new rlglQuadTreeElement(_quadTree, Center + 0.5f * childrenSize * new GlmNet.vec3( 1.0f, -1.0f, 0.0f), Level + 1),
+                new rlglQuadTreeElement(_quadTree, Center + 0.5f * childrenSize * new GlmNet.vec3( 1.0f,  1.0f, 0.0f), Level + 1),
+                new rlglQuadTreeElement(_quadTree, Center + 0.5f * childrenSize * new GlmNet.vec3(-1.0f,  1.0f, 0.0f), Level + 1)
             };
         }
 
-
-        rlglQuadTreeElement child(uint i)
-        {
-            return children == null || i > 3 ? null : children[i];
-        }
-
-        public object Current => throw new NotImplementedException();
-
-        public bool MoveNext()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void Reset()
-        {
-            throw new NotImplementedException();
-        }
     }
-    class rlglQuadTree : IEnumerable<rlglQuadTreeElement>
+    public class rlglQuadTree
     {
-        rlglQuadTree(float totalSize, int _maxSubdivision)
+        public float _totalSize { get; private set; }
+        public int _maxSubdivisions { get; private set; }
+        rlglQuadTreeElement root;
+        
+        public rlglQuadTree(float totalSize, int maxSubdivision)
         {
             _totalSize = totalSize;
-            _maxSubdivisions = _maxSubdivision;
-
+            _maxSubdivisions = maxSubdivision;
             root = new rlglQuadTreeElement(this, new GlmNet.vec3(0.0f), 0);
-            root.split();
         }
-        public float _totalSize { get; private set; }
-        int _maxSubdivisions;
-
-        rlglQuadTreeElement root;
-
-        public IEnumerator<rlglQuadTreeElement> GetEnumerator()
+        
+        public List<rlglQuadTreeElement> getQuads(GlmNet.vec3 pos)
         {
-            throw new NotImplementedException();
+            List<rlglQuadTreeElement> quads = new List<rlglQuadTreeElement>();
+            root.splitIfNear(pos, ref quads);
+            return quads;
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
     }
 }
