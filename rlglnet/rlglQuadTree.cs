@@ -19,7 +19,7 @@ namespace rlglnet
         }
         public float size()
         {
-            return _quadTree._totalSize / (float)(Level + 1);
+            return _quadTree._totalSize / (float)(Level + 1);//wrong
         }
         protected rlglQuadTreeElement[] children = null;
 
@@ -30,12 +30,7 @@ namespace rlglnet
 
         public void splitIfNear(GlmNet.vec3 pos, ref List<rlglQuadTreeElement> quads)
         {
-            if(Level >= _quadTree._maxSubdivisions)
-            {
-                return;
-            }
-            
-            if(GlmNet.glm.distance(pos, Center) < size())
+            if(Level < _quadTree._maxSubdivisions && GlmNet.glm.distance(pos, Center) < size())
             {
                 split();
                 foreach(rlglQuadTreeElement quad in children)

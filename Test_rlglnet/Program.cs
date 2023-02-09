@@ -16,7 +16,8 @@ namespace Test_rlglnet
 
             foreach(rlglQuadTreeElement quad in quads)
             {
-                Console.WriteLine("[" + quad.Level + "]" + quad.Center.x + ", " + quad.Center.y + ", " + quad.Center.z);
+                Console.WriteLine("[" + quad.Level + "] " + quad.Center.x + ", " + quad.Center.y + ", " + quad.Center.z);
+                //Console.WriteLine(quad.Center.x + ", " + quad.Center.y);
             }
 
         }
