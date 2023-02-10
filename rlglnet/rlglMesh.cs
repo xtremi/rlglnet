@@ -17,7 +17,14 @@ namespace rlglnet
         private int   _nNodesPerEdge;
         private int totalNodesNotIndexed;
         private int totalElementsIndexed;
-
+        private ISurface3Dfunction currentSurfaceFunction;
+        public void translate(vec3 translation)
+        {
+            _centerPos += translation;
+            TerrainColorFunction terrainFunction = new TerrainColorFunction();
+            VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightDataIndexed(currentSurfaceFunction, terrainFunction);
+            UpdateDynamicBuffer(vertexDataDynamic);
+        }
         public void draw()
         {
             //glDrawArrays(GL_TRIANGLES, 0, totalNodesNotIndexed);
@@ -97,9 +104,10 @@ namespace rlglnet
 
         public unsafe void UpdateMeshHeight(ISurface3Dfunction surfaceFunction)
         {
+            currentSurfaceFunction = surfaceFunction;
             TerrainColorFunction terrainFunction = new TerrainColorFunction();
             //VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightData(surfaceFunction, terrainFunction);
-            VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightDataIndexed(surfaceFunction, terrainFunction);
+            VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightDataIndexed(currentSurfaceFunction, terrainFunction);
             UpdateDynamicBuffer(vertexDataDynamic);
         }
 
@@ -190,7 +198,7 @@ namespace rlglnet
             vec3[] vertPosition = new vec3[_nNodesPerEdge * _nNodesPerEdge];
 
             vec3 startPos = _centerPos;
-            startPos -= new vec3(-_sizeXY / 2.0f, -_sizeXY / 2.0f, 0.0f);
+            startPos -= new vec3(_sizeXY / 2.0f, _sizeXY / 2.0f, 0.0f);
             vec3 cornerPos = startPos;
 
             float elSize = _sizeXY / (float)elementsPerEdge;
@@ -326,7 +334,8 @@ namespace rlglnet
             int elementsPerEdge = _nNodesPerEdge - 1;
             VertexDataStatic[] vertdata = new VertexDataStatic[_nNodesPerEdge * _nNodesPerEdge];
 
-            vec2 startPos = new vec2(-0.5f * _sizeXY);
+            vec2 startPos = new vec2(_centerPos.x, _centerPos.y);
+            startPos -= new vec2(_sizeXY / 2.0f, _sizeXY / 2.0f);
             vec2 cornerPos = startPos;
 
             float elsize = _sizeXY / (float)elementsPerEdge;

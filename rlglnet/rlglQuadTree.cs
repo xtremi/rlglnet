@@ -17,44 +17,40 @@ namespace rlglnet
             Center = center;
             Level = level;
         }
-        public float size()
+        public float Size()
         {
-            return _quadTree._totalSize / MathF.Pow(2.0f, Level);//wrong
+            return _quadTree._totalSize / MathF.Pow(2.0f, Level);
         }
         protected rlglQuadTreeElement[] children = null;
 
 
-        public bool isSplit(){
+        public bool IsSplit(){
             return children != null; 
         }
 
-        public void splitIfNear(GlmNet.vec3 pos, ref List<rlglQuadTreeElement> quads)
+        public void SplitIfNear(GlmNet.vec3 pos, ref List<rlglQuadTreeElement> quads)
         {
             
             float distance = MathF.Sqrt(MathF.Pow(Center.x - pos.x, 2.0f) + MathF.Pow(Center.y - pos.y, 2.0f) + MathF.Pow(Center.z - pos.z, 2.0f));
-            float maxDistance = size();
-
-            Console.WriteLine("L" + Level + ": " + "center: " + Center.x + ";" + Center.y + " distance: " + distance + " maxDistance: " + maxDistance);
+            float maxDistance = Size();
 
             if (Level < _quadTree._maxSubdivisions && distance < maxDistance)
             {
-                Console.WriteLine("\tSplitting");
-                split();
+                Split();
                 foreach(rlglQuadTreeElement quad in children)
                 {
-                    quad.splitIfNear(pos, ref quads);
+                    quad.SplitIfNear(pos, ref quads);
                 }
             }
             else
             {
-                Console.WriteLine("\tNOT splitting");
                 quads.Add(this);
             }
 
         }
-        public void split()
+        public void Split()
         {
-            float childrenSize = size() / 2.0f;
+            float childrenSize = Size() / 2.0f;
             children = new rlglQuadTreeElement[4]
             {
                 new rlglQuadTreeElement(_quadTree, Center + 0.5f * childrenSize * new GlmNet.vec3(-1.0f, -1.0f, 0.0f), Level + 1),
@@ -78,10 +74,10 @@ namespace rlglnet
             root = new rlglQuadTreeElement(this, new GlmNet.vec3(0.0f), 0);
         }
         
-        public List<rlglQuadTreeElement> getQuads(GlmNet.vec3 pos)
+        public List<rlglQuadTreeElement> GetQuads(GlmNet.vec3 pos)
         {
             List<rlglQuadTreeElement> quads = new List<rlglQuadTreeElement>();
-            root.splitIfNear(pos, ref quads);
+            root.SplitIfNear(pos, ref quads);
             return quads;
         }
 

@@ -13,13 +13,15 @@ namespace rlglnet
     public class rlglBaseApp
     {
         private static Random rand;
-        private float meshBaseSize = 150.0f;
-      
+        private float meshBaseSize;
+        rlglQuadTree terrainQuadTree;
+        List<rlglQuadTreeElement> terrainQuads;
 
         public Window window { get; private set; }
         private CameraControl cameraControl;
         private Camera camera;
         private List<rlglMesh> meshes;
+        private vec2 previousCenter = new vec2(0.0f);
 
         int  uniColLoc;
         int  uniVPMloc;
@@ -104,27 +106,20 @@ namespace rlglnet
             uniLightPos = glGetUniformLocation(program, "uLightPos");
 
             //Meshes:
-            int nNodesPerEdge = 200;
-
-            List<vec3> meshPositions = new List<vec3> 
-            {
-                new vec3(-1.0f * meshBaseSize/2.0f, -1.0f * meshBaseSize/2.0f, 0.0f),
-                new vec3(1.0f * meshBaseSize/2.0f, -1.0f * meshBaseSize/2.0f, 0.0f),
-                new vec3(1.0f * meshBaseSize/2.0f, 1.0f * meshBaseSize/2.0f, 0.0f),
-                new vec3(-1.0f * meshBaseSize/2.0f, 1.0f * meshBaseSize/2.0f, 0.0f)
-            };
+            int nNodesPerEdge = 40;
+            meshBaseSize = 500.0f;
+            terrainQuadTree = new rlglQuadTree(meshBaseSize, 5);
+            terrainQuads = terrainQuadTree.GetQuads(new vec3(0.0f, 0.0f, 0.0f));
 
             meshes = new List<rlglMesh>();
-            for (int i = 0; i < 4; i++)
+            int meshIndex = 0;
+            foreach(rlglQuadTreeElement quad in terrainQuads)
             {
                 meshes.Add(new rlglMesh());
-                meshes[i].initializeMesh(nNodesPerEdge, meshPositions[i], meshBaseSize);
+                meshes[meshIndex++].initializeMesh(nNodesPerEdge, quad.Center, quad.Size());
+
             }
             SetFlatTerrain();
-
-            //color:
-            rand = new Random();
-            SetRandomColor(uniColLoc);
 
             //Camera:
             cameraControl = new CameraControl(windowCenter);
@@ -132,6 +127,10 @@ namespace rlglnet
             camera.CamPos = new vec3(0.0f, 0.0f, 125.0f);
             camera.Front = new vec3(1.0f, 1.0f, -1.0f);
             camera.Up = new vec3(0.0f, 0.0f, 1.0f);
+
+
+            mat4 modelM = new mat4(1.0f);
+            glUniformMatrix4fv(uniMloc, 1, false, modelM.to_array());
         }
 
 
@@ -199,27 +198,32 @@ namespace rlglnet
             // Clear the framebuffer to defined background color
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            if (frameCounter++ % 600 == 0)
+            
+            vec2 currentTerrainPos = new vec2(camera.CamPos.x, camera.CamPos.y);
+            float distance = glm.distance(currentTerrainPos, previousCenter);
+            float minDistance = terrainQuadTree._totalSize / MathF.Pow(2.0f, terrainQuadTree._maxSubdivisions);
+
+            if(distance > minDistance)
             {
-                SetRandomColor(uniColLoc);
+                vec2 translation = currentTerrainPos - previousCenter;
+                previousCenter = currentTerrainPos;
+                mat4 modelM = new mat4(1.0f);
+                glm.translate(modelM, new vec3(currentTerrainPos, 0.0f));
+                glUniformMatrix4fv(uniMloc, 1, false, modelM.to_array());
+                for (int i = 0; i < meshes.Count; i++)
+                {
+                    meshes[i].translate(new vec3(translation, 0.0f));
+                }
             }
 
-
-            List<vec3> meshPositions = new List<vec3>
+            for (int i = 0; i < meshes.Count; i++)
             {
-                new vec3(-1.0f * meshBaseSize/2.0f, -1.0f * meshBaseSize/2.0f, 0.0f),
-                new vec3(1.0f * meshBaseSize/2.0f, -1.0f * meshBaseSize/2.0f, 0.0f),
-                new vec3(1.0f * meshBaseSize/2.0f, 1.0f * meshBaseSize/2.0f, 0.0f),
-                new vec3(-1.0f * meshBaseSize/2.0f, 1.0f * meshBaseSize/2.0f, 0.0f)
-            };
-            for (int i = 0; i < 4; i++)
-            {
-                mat4 modelM = new mat4(1.0f);
-                glm.translate(modelM, meshPositions[i]);
-                glUniformMatrix4fv(uniMloc, 1, false, modelM.to_array());
+                glUniform3f(uniColLoc, 
+                    (float)i /(float)meshes.Count, 
+                    (float)i / (float)meshes.Count, 
+                    (float)i / (float)meshes.Count);
                 meshes[i].draw();
             }
-
         }
 
         private void PrepareContext()
