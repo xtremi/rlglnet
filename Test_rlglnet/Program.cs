@@ -8,16 +8,16 @@ namespace Test_rlglnet
     {
         static void Main(string[] args)
         {
-            rlglnet.rlglQuadTree quadTree = new rlglQuadTree(10.0f, 4);
+            rlglnet.rlglQuadTree quadTree = new rlglQuadTree(10.0f, 6);
 
-            GlmNet.vec3 pos1 = new GlmNet.vec3(2.5f, 2.5f, 1.0f);
+            GlmNet.vec3 pos1 = new GlmNet.vec3(2.5f, 2.5f, 0.0f);
             List<rlglQuadTreeElement> quads = quadTree.getQuads(pos1);
 
-
-            foreach(rlglQuadTreeElement quad in quads)
+            //https://scatterplot.online/
+            foreach (rlglQuadTreeElement quad in quads)
             {
-                Console.WriteLine("[" + quad.Level + "] " + quad.Center.x + ", " + quad.Center.y + ", " + quad.Center.z);
-                //Console.WriteLine(quad.Center.x + ", " + quad.Center.y);
+                //Console.WriteLine("[" + quad.Level + "] " + quad.Center.x + ", " + quad.Center.y + ", " + quad.Center.z);
+                Console.WriteLine(quad.Center.x + ", " + quad.Center.y);
             }
 
         }
