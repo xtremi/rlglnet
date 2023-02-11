@@ -84,6 +84,7 @@ namespace rlglnet
             terrainShader.Create(
                 "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\triangle.vert",
                 "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\triangle.frag");
+            terrainShader.Use();
         }
         public void InitMeshes()
         {
