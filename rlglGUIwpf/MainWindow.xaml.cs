@@ -27,7 +27,7 @@ namespace rlglGUIwpf
         void RlglInit()
         {
             rlglBaseApp = new rlglnet.rlglBaseApp(); 
-            rlglBaseApp.InitWindow(new GlmNet.vec2(1080, 720));
+            rlglBaseApp.InitApp(new GlmNet.vec2(1080, 720));
             SizeChanged += MainWindowSizedChanged;
             LocationChanged += MainWindowMoved;
 

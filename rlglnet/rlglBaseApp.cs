@@ -5,42 +5,54 @@ using System.Diagnostics;
 using GLFW;
 using GlmNet;
 using static OpenGL.Gl;
-using OpenGL;
 using System.Collections.Generic;
 
 namespace rlglnet
 {
     public class rlglBaseApp
     {
-        private float meshBaseSize;
-        rlglQuadTree terrainQuadTree;
-        List<rlglQuadTreeElement> terrainQuads;
-
+        //BaseApp
+        private List<rlglRenderableObject> renderObjects;
         public Window window { get; private set; }
         private CameraControl cameraControl;
         private Camera camera;
-        private List<rlglMesh> meshes;
         private vec2 previousCenter = new vec2(0.0f);
-
-        int  uniColLoc;
-        int  uniVPMloc;
-        int  uniMloc;
-        int  uniLightPos;
         long frameCounter = 0;
         vec2 windowCenter;
 
         private FocusCallback WindowFocusCallback;
 
+        //Move to specific App
+        private float meshBaseSize;
+        private List<rlglMesh> terrainMeshes;
+        rlglQuadTree terrainQuadTree;
+        List<rlglQuadTreeElement> terrainQuads;
+        TerrainShader terrainShader;
 
-
-        public void InitWindow(vec2 windowSize)
+        private void InitTraceLog()
         {
             string logFile = "log.txt";
             File.Delete(logFile);
             Trace.Listeners.Add(new TextWriterTraceListener(logFile, "mainlog"));
             Trace.AutoFlush = true;
-            Trace.WriteLine("rlglBaseApp::InitWindow");
+        }
 
+        public void InitApp(vec2 windowSize)
+        {
+            InitTraceLog();
+            Trace.WriteLine("rlglBaseApp::InitTraceLog");
+            InitWindow(windowSize);
+            InitShaders();
+            InitMeshes();
+            InitRenderObjects();
+            InitCamera(windowSize);
+            SetFlatTerrain();
+
+            terrainShader.SetModelMatrixUniform(new mat4(1.0f));
+        }
+
+        private void InitWindow(vec2 windowSize)
+        {
             PrepareContext();
 
             //Window and cursor:
@@ -54,47 +66,45 @@ namespace rlglnet
 
             Glfw.SetWindowFocusCallback(
                 window, WindowFocusCallback);
+        }
 
-            //Shader:
-            rlglShader terrainShader = new rlglShader();
-            terrainShader.Create(
-                "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\triangle.vert",
-                "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\triangle.frag");
-            
-            uniColLoc   = glGetUniformLocation(terrainShader.ID, "uColor");
-            uniVPMloc   = glGetUniformLocation(terrainShader.ID, "uVPmat");
-            uniMloc     = glGetUniformLocation(terrainShader.ID, "uMmat");
-            uniLightPos = glGetUniformLocation(terrainShader.ID, "uLightPos");
-
-            //Meshes:
-            int nNodesPerEdge = 40;
-            meshBaseSize = 500.0f;
-            terrainQuadTree = new rlglQuadTree(meshBaseSize, 5);
-            terrainQuads = terrainQuadTree.GetQuads(new vec3(0.0f, 0.0f, 0.0f));
-
-            meshes = new List<rlglMesh>();
-            int meshIndex = 0;
-            foreach(rlglQuadTreeElement quad in terrainQuads)
-            {
-                meshes.Add(new rlglMesh());
-                meshes[meshIndex++].initializeMesh(nNodesPerEdge, quad.Center, quad.Size());
-
-            }
-            SetFlatTerrain();
-
+        private void InitCamera(vec2 windowSize)
+        {
             //Camera:
             cameraControl = new CameraControl(windowCenter);
             camera = new Camera(windowSize.x / windowSize.y, 45.0f, 0.1f, 1000.0f);
             camera.CamPos = new vec3(0.0f, 0.0f, 125.0f);
             camera.Front = new vec3(1.0f, 1.0f, -1.0f);
             camera.Up = new vec3(0.0f, 0.0f, 1.0f);
-
-
-            mat4 modelM = new mat4(1.0f);
-            glUniformMatrix4fv(uniMloc, 1, false, modelM.to_array());
         }
 
+        public void InitShaders()
+        {
+            terrainShader = new TerrainShader();
+            terrainShader.Create(
+                "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\triangle.vert",
+                "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\triangle.frag");
+        }
+        public void InitMeshes()
+        {
+            int nNodesPerEdge = 40;
+            meshBaseSize = 500.0f;
+            terrainQuadTree = new rlglQuadTree(meshBaseSize, 5);
+            terrainQuads = terrainQuadTree.GetQuads(new vec3(0.0f, 0.0f, 0.0f));
 
+            terrainMeshes = new List<rlglMesh>();
+            int meshIndex = 0;
+            foreach (rlglQuadTreeElement quad in terrainQuads)
+            {
+                terrainMeshes.Add(new rlglMesh());
+                terrainMeshes[meshIndex++].initializeMesh(nNodesPerEdge, quad.Center, quad.Size());
+
+            }
+        }
+        public void InitRenderObjects()
+        {
+
+        }
         private void OnWindowFocus(Window window, bool focused)
         {
             if (focused)
@@ -133,15 +143,13 @@ namespace rlglnet
             
             Glfw.SetCursorPosition(window, windowCenter.x, windowCenter.y);
 
-           
-            glUniformMatrix4fv(uniVPMloc, 1, false, camera.VPmatrix().to_array());
+            terrainShader.SetVPmatrixUniform(camera.VPmatrix());
 
             float lightPosSpeed = 0.005f;
             float lightPosRad = 150.0f;
             float lightPosHeight = 100.0f;
             vec3 lightPos = new vec3(lightPosRad * glm.sin(lightPosSpeed * (float)frameCounter), lightPosRad * glm.cos(lightPosSpeed * (float)frameCounter), lightPosHeight);
-            glUniform3f(uniLightPos, lightPos.x, lightPos.y, lightPos.z);
-
+            terrainShader.SetLightPosUniform(lightPos);
 
             if (Glfw.GetKey(window, GLFW.Keys.Escape) == InputState.Press)
             {
@@ -170,20 +178,22 @@ namespace rlglnet
                 previousCenter = currentTerrainPos;
                 mat4 modelM = new mat4(1.0f);
                 glm.translate(modelM, new vec3(currentTerrainPos, 0.0f));
-                glUniformMatrix4fv(uniMloc, 1, false, modelM.to_array());
-                for (int i = 0; i < meshes.Count; i++)
+                terrainShader.SetModelMatrixUniform(modelM);
+                for (int i = 0; i < terrainMeshes.Count; i++)
                 {
-                    meshes[i].translate(new vec3(translation, 0.0f));
+                    terrainMeshes[i].translate(new vec3(translation, 0.0f));
                 }
             }
 
-            for (int i = 0; i < meshes.Count; i++)
+            for (int i = 0; i < terrainMeshes.Count; i++)
             {
-                glUniform3f(uniColLoc, 
-                    (float)i /(float)meshes.Count, 
-                    (float)i / (float)meshes.Count, 
-                    (float)i / (float)meshes.Count);
-                meshes[i].draw();
+                terrainShader.SetColorUniform(
+                    new vec3(
+                        (float)i /(float)terrainMeshes.Count, 
+                        (float)i / (float)terrainMeshes.Count, 
+                        (float)i / (float)terrainMeshes.Count)
+                    );
+                terrainMeshes[i].draw();
             }
         }
 
@@ -217,7 +227,7 @@ namespace rlglnet
         {
             FlatSurfaceFunction surfaceFunction = new FlatSurfaceFunction();
             surfaceFunction.Height = 0.0f;
-            foreach (rlglMesh mesh in meshes)
+            foreach (rlglMesh mesh in terrainMeshes)
             {
                 mesh.UpdateMeshHeight(surfaceFunction);
             }
@@ -227,7 +237,7 @@ namespace rlglnet
             SineSurfaceFunction surfaceFunction = new SineSurfaceFunction();
             surfaceFunction.Amplitude = height;
             surfaceFunction.WaveLength = waveLength;
-            foreach (rlglMesh mesh in meshes)
+            foreach (rlglMesh mesh in terrainMeshes)
             {
                 mesh.UpdateMeshHeight(surfaceFunction);
             }
@@ -237,7 +247,7 @@ namespace rlglnet
             PlaneWaveFunction surfaceFunction = new PlaneWaveFunction();
             surfaceFunction.Amplitude = height;
             surfaceFunction.WaveLength = waveLength;
-            foreach (rlglMesh mesh in meshes)
+            foreach (rlglMesh mesh in terrainMeshes)
             {
                 mesh.UpdateMeshHeight(surfaceFunction);
             }
@@ -251,7 +261,7 @@ namespace rlglnet
             surfaceFunction.Persistance = persistance;
             surfaceFunction.Roughness = roughness;
             surfaceFunction.Offset = offset;
-            foreach (rlglMesh mesh in meshes)
+            foreach (rlglMesh mesh in terrainMeshes)
             {
                 mesh.UpdateMeshHeight(surfaceFunction);
             }

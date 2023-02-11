@@ -3,12 +3,18 @@ using System.IO;
 
 namespace rlglnet
 {
-    class rlglShader
+    public class rlglShader
     {
         public uint ID { get; private set; }
         public uint VertShaderID { get; private set; }
         public uint FragShaderID { get; private set; }
         public string ErrorLog { get; private set; }
+
+        virtual public void LocateUniforms() { }
+        public void Use()
+        {
+            glUseProgram(ID);
+        }
         public  bool Create(string vertShaderPath, string fragShaderPath)
         {
             VertShaderID = CreateShader(GL_VERTEX_SHADER, File.ReadAllText(vertShaderPath));
@@ -30,8 +36,8 @@ namespace rlglnet
 
             glDeleteShader(VertShaderID);
             glDeleteShader(FragShaderID);
-
-            glUseProgram(ID);
+            
+            LocateUniforms();
             return true;
         }
 
@@ -52,7 +58,14 @@ namespace rlglnet
             return shader;
         }
 
+        public void SetVec3uniform(GlmNet.vec3 value, int uniformID)
+        {
+            glUniform3f(uniformID, value.x, value.y, value.z);
+        }
 
-
+        public void SetMat4uniform(GlmNet.mat4 value, int uniformID)
+        {
+            glUniformMatrix4fv(uniformID, 1, false, value.to_array());
+        }
     }
 }
