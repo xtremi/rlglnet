@@ -12,7 +12,6 @@ namespace rlglnet
 {
     public class rlglBaseApp
     {
-        private static Random rand;
         private float meshBaseSize;
         rlglQuadTree terrainQuadTree;
         List<rlglQuadTreeElement> terrainQuads;
@@ -32,49 +31,7 @@ namespace rlglnet
 
         private FocusCallback WindowFocusCallback;
 
-        public void SetFlatTerrain()
-        {
-            FlatSurfaceFunction surfaceFunction = new FlatSurfaceFunction();
-            surfaceFunction.Height = 0.0f;
-            foreach(rlglMesh mesh in meshes)
-            {
-                mesh.UpdateMeshHeight(surfaceFunction);
-            }
-        }
-        public void SetSineWaveTerrain(float height, float waveLength)
-        {
-            SineSurfaceFunction surfaceFunction = new SineSurfaceFunction();
-            surfaceFunction.Amplitude = height;
-            surfaceFunction.WaveLength = waveLength;
-            foreach (rlglMesh mesh in meshes)
-            {
-                mesh.UpdateMeshHeight(surfaceFunction);
-            }
-        }
-        public void SetPlaneWaveTerrain(float height, float waveLength)
-        {
-            PlaneWaveFunction surfaceFunction = new PlaneWaveFunction();
-            surfaceFunction.Amplitude = height;
-            surfaceFunction.WaveLength = waveLength;
-            foreach (rlglMesh mesh in meshes)
-            {
-                mesh.UpdateMeshHeight(surfaceFunction);
-            }
-        }
-        public void SetSimplexNoiseTerrain(vec2 offset, float amplitude, float frequency, int octaves, float persistance, float roughness)
-        {
-            SimplexNoise2Dfunction surfaceFunction = new SimplexNoise2Dfunction();
-            surfaceFunction.Amplitude = amplitude;
-            surfaceFunction.Frequency = frequency;
-            surfaceFunction.Octaves = octaves;
-            surfaceFunction.Persistance = persistance;
-            surfaceFunction.Roughness = roughness;
-            surfaceFunction.Offset = offset;
-            foreach (rlglMesh mesh in meshes)
-            {
-                mesh.UpdateMeshHeight(surfaceFunction);
-            }
-        }
+
 
         public void InitWindow(vec2 windowSize)
         {
@@ -99,11 +56,15 @@ namespace rlglnet
                 window, WindowFocusCallback);
 
             //Shader:
-            uint program = CreateProgram();
-            uniColLoc = glGetUniformLocation(program, "uColor");
-            uniVPMloc = glGetUniformLocation(program, "uVPmat");
-            uniMloc = glGetUniformLocation(program, "uMmat");
-            uniLightPos = glGetUniformLocation(program, "uLightPos");
+            rlglShader terrainShader = new rlglShader();
+            terrainShader.Create(
+                "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\triangle.vert",
+                "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\triangle.frag");
+            
+            uniColLoc   = glGetUniformLocation(terrainShader.ID, "uColor");
+            uniVPMloc   = glGetUniformLocation(terrainShader.ID, "uVPmat");
+            uniMloc     = glGetUniformLocation(terrainShader.ID, "uMmat");
+            uniLightPos = glGetUniformLocation(terrainShader.ID, "uLightPos");
 
             //Meshes:
             int nNodesPerEdge = 40;
@@ -251,50 +212,49 @@ namespace rlglnet
             Glfw.SetWindowPosition(window, x, y);
         }
 
-        private uint CreateProgram()
+
+        public void SetFlatTerrain()
         {
-            var vertex = CreateShader(GL_VERTEX_SHADER, File.ReadAllText("C:/coding/Csharp/rlglnet/data/shaders/triangle.vert"));
-            var fragment = CreateShader(GL_FRAGMENT_SHADER, File.ReadAllText("C:/coding/Csharp/rlglnet/data/shaders/triangle.frag"));
-
-            var program = glCreateProgram();
-            glAttachShader(program, vertex);
-            glAttachShader(program, fragment);
-
-            glLinkProgram(program);
-
-            glDeleteShader(vertex);
-            glDeleteShader(fragment);
-
-            glUseProgram(program);
-            return program;
-        }
-
-        private unsafe uint CreateShader(int type, string source)
-        {
-            //Trace.WriteLine("rlglBaseApp::CreateShader");
-
-            var shader = glCreateShader(type);
-            glShaderSource(shader, source);
-            glCompileShader(shader);
-
-            int arg = 0;
-            glGetShaderiv(shader, GL_COMPILE_STATUS, &arg);
-            if (arg == 0)
+            FlatSurfaceFunction surfaceFunction = new FlatSurfaceFunction();
+            surfaceFunction.Height = 0.0f;
+            foreach (rlglMesh mesh in meshes)
             {
-                string log = glGetShaderInfoLog(shader);
-                Trace.WriteLine("Error shader compilation");
-                Trace.WriteLine(log);
+                mesh.UpdateMeshHeight(surfaceFunction);
             }
-
-            return shader;
         }
-
-        private static void SetRandomColor(int location)
+        public void SetSineWaveTerrain(float height, float waveLength)
         {
-            var r = (float)rand.NextDouble();
-            var g = (float)rand.NextDouble();
-            var b = (float)rand.NextDouble();
-            glUniform3f(location, r, g, b);
+            SineSurfaceFunction surfaceFunction = new SineSurfaceFunction();
+            surfaceFunction.Amplitude = height;
+            surfaceFunction.WaveLength = waveLength;
+            foreach (rlglMesh mesh in meshes)
+            {
+                mesh.UpdateMeshHeight(surfaceFunction);
+            }
+        }
+        public void SetPlaneWaveTerrain(float height, float waveLength)
+        {
+            PlaneWaveFunction surfaceFunction = new PlaneWaveFunction();
+            surfaceFunction.Amplitude = height;
+            surfaceFunction.WaveLength = waveLength;
+            foreach (rlglMesh mesh in meshes)
+            {
+                mesh.UpdateMeshHeight(surfaceFunction);
+            }
+        }
+        public void SetSimplexNoiseTerrain(vec2 offset, float amplitude, float frequency, int octaves, float persistance, float roughness)
+        {
+            SimplexNoise2Dfunction surfaceFunction = new SimplexNoise2Dfunction();
+            surfaceFunction.Amplitude = amplitude;
+            surfaceFunction.Frequency = frequency;
+            surfaceFunction.Octaves = octaves;
+            surfaceFunction.Persistance = persistance;
+            surfaceFunction.Roughness = roughness;
+            surfaceFunction.Offset = offset;
+            foreach (rlglMesh mesh in meshes)
+            {
+                mesh.UpdateMeshHeight(surfaceFunction);
+            }
         }
 
     }
