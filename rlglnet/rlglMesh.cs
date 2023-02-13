@@ -5,47 +5,75 @@ using System.Runtime.InteropServices;
 
 namespace rlglnet
 {
-    class rlglMesh
+    public abstract class rlglMesh
     {
-        public uint VAO { get; private set; }
+        protected uint VAO = 0;
+        protected bool _indexed = false;
+        protected int _nElementsIndexed = 0;
+        protected int _nNodesNotIndexed = 0;
+        public abstract void Init();
+
+        public virtual void Draw()
+        {
+            if (!_indexed) { 
+                glDrawArrays(GL_TRIANGLES, 0, _nNodesNotIndexed);
+            }
+            else
+            {
+                unsafe
+                {
+                    glDrawElements(GL_TRIANGLES, _nElementsIndexed * 6, GL_UNSIGNED_INT, NULL);
+                }
+            }
+        }
+
+        public virtual void Bind()
+        {
+            glBindVertexArray(VAO);
+        }
+
+    }
+    public class rlglSurfaceMesh : rlglMesh
+    {
+        public rlglSurfaceMesh(
+            vec3 centerPos,
+            float edgeSize,
+            int nNodesPerEdge)
+        {
+            _centerPos = centerPos;
+            _edgeSize = edgeSize;
+            _nNodesPerEdge = nNodesPerEdge;
+            _nElementsIndexed = (_nNodesPerEdge - 1) * (_nNodesPerEdge - 1);
+            _nNodesNotIndexed = _nElementsIndexed * 6;
+        }
+
+        struct VertexDataStatic
+        {
+            public vec2 posXY;
+            public vec2 uv;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 0)]
+        struct VertexDataDynamic
+        {
+            public float posZ;
+            public vec3 color;
+            public vec3 normal;
+            public vec3 tangent;
+        }
+
         public uint VBO_D { get; private set; }
         public uint VBO_S { get; private set; }
         public uint EBO_S { get; private set; }
 
         private vec3 _centerPos;
-        private float _sizeXY;
+        private float _edgeSize;
         private int   _nNodesPerEdge;
-        private int totalNodesNotIndexed;
-        private int totalElementsIndexed;
-        private ISurface3Dfunction currentSurfaceFunction;
-        public void translate(vec3 translation)
-        {
-            _centerPos += translation;
-            TerrainColorFunction terrainFunction = new TerrainColorFunction();
-            VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightDataIndexed(currentSurfaceFunction, terrainFunction);
-            UpdateDynamicBuffer(vertexDataDynamic);
-        }
-        public void draw()
-        {
-            //glDrawArrays(GL_TRIANGLES, 0, totalNodesNotIndexed);
-            unsafe
-            {
-                glBindVertexArray(VAO);
-                glDrawElements(GL_TRIANGLES, totalElementsIndexed * 6, GL_UNSIGNED_INT, NULL);
-            }
-        }
-        public unsafe void initializeMesh(
-            int nNodesPerEdge, 
-            vec3 centerPos,
-            float size)
-        {
-            _nNodesPerEdge = nNodesPerEdge;
-            _sizeXY = size;
-            _centerPos = centerPos;
-            totalElementsIndexed = (nNodesPerEdge - 1) * (nNodesPerEdge - 1);
-            totalNodesNotIndexed = totalElementsIndexed * 6;
+        private ISurface3Dfunction _currentSurfaceFunction;
 
-            //VertexDataStatic[] vertexDataStatic = CreateRectangularMesh();
+
+        public override unsafe void Init()
+        {
             VertexDataStatic[] vertexDataStatic = CreateRectangularMeshIndexed();
             int[] elementIndices = CreateRectangularMeshIndices();
             VAO = glGenVertexArray();
@@ -91,6 +119,14 @@ namespace rlglnet
         }
 
 
+        public void Translate(vec3 translation)
+        {
+            _centerPos += translation;
+            TerrainColorFunction terrainFunction = new TerrainColorFunction();
+            VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightDataIndexed(_currentSurfaceFunction, terrainFunction);
+            UpdateDynamicBuffer(vertexDataDynamic);
+        }
+
         private unsafe void UpdateDynamicBuffer(VertexDataDynamic[] vertexDataDynamic)
         {
             glBindVertexArray(VAO);
@@ -104,42 +140,205 @@ namespace rlglnet
 
         public unsafe void UpdateMeshHeight(ISurface3Dfunction surfaceFunction)
         {
-            currentSurfaceFunction = surfaceFunction;
+            _currentSurfaceFunction = surfaceFunction;
             TerrainColorFunction terrainFunction = new TerrainColorFunction();
             //VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightData(surfaceFunction, terrainFunction);
-            VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightDataIndexed(currentSurfaceFunction, terrainFunction);
+            VertexDataDynamic[] vertexDataDynamic = CreateRectangularMeshHeightDataIndexed(_currentSurfaceFunction, terrainFunction);
             UpdateDynamicBuffer(vertexDataDynamic);
         }
 
-        struct VertexDataStatic
-        {
-            public vec2 posXY;
-            public vec2 uv;
-        }
-
-        [StructLayout(LayoutKind.Sequential, Pack = 0)]
-        struct VertexDataDynamic
-        {
-            public float posZ;
-            public vec3 color;
-            public vec3 normal;
-            public vec3 tangent;
-        }
-
-
-
-        private VertexDataDynamic[] CreateRectangularMeshHeightData(
+      
+        /*!
+            Create the dynamic data of the terrain:
+            - height (pos z), normal, and tangent (tangent not implemented yet). 
+         */
+        private VertexDataDynamic[] CreateRectangularMeshHeightDataIndexed(
             ISurface3Dfunction surfaceFunc,
-            IColorFunction     colorFunc)
+            IColorFunction colorFunc)
+        {
+            int elementsPerEdge = _nNodesPerEdge - 1;
+            VertexDataDynamic[] vertData = new VertexDataDynamic[_nNodesPerEdge * _nNodesPerEdge];
+            vec3[] vertPosition = new vec3[_nNodesPerEdge * _nNodesPerEdge];
+
+            vec3 startPos = _centerPos;
+            startPos -= new vec3(_edgeSize / 2.0f, _edgeSize / 2.0f, 0.0f);
+            vec3 cornerPos = startPos;
+
+            float elSize = _edgeSize / (float)elementsPerEdge;
+
+            vec3 tangent = new vec3(1.0f, 0.0f, 0.0f);  //should be calculated
+            vec3 color = new vec3(1.0f, 0.0f, 0.0f);
+
+            //Get all position coordinates:
+            int index = 0;
+            float dL = elSize / 10.0f;
+            for (int i = 0; i < _nNodesPerEdge; i++)
+            {
+                for (int j = 0; j < _nNodesPerEdge; j++)
+                {
+                    vertData[index].posZ = surfaceFunc.Value(cornerPos.x, cornerPos.y);
+                    vertData[index].normal = surfaceFunc.Normal(cornerPos.x, cornerPos.y, dL);
+                    vertData[index].tangent = tangent;
+
+                    float colorScale = surfaceFunc.NormalizeValue(vertData[index].posZ);
+                    colorFunc.Value(out vertData[index].color, colorScale, vertData[index].normal);
+                    index++;
+
+                    cornerPos.x += elSize;
+                }
+                cornerPos.x = startPos.x;
+                cornerPos.y += elSize;
+            }
+            return vertData; 
+        }
+
+
+
+      
+        /*!
+        Given two triangles making up one rectangle as shows below.
+        Where the triangles have overlapping but not shared nodes.
+        This function returns a vector containing the UV coordinates
+        of each node, where coords go from 0.0 to 1.0 from lower/bottom
+        to top/right
+
+        Nodes are ordered as on the figure 
+            ^ Y
+            |
+         3&6x-----x5
+            | \   |
+            |   \ |
+           1x-----x2&4   ---> X
+         */
+        public readonly vec2[] unitUVcoords = new vec2[]{
+            new vec2(0.0f, 0.0f),
+            new vec2(1.0f, 0.0f),
+            new vec2(0.0f, 1.0f),
+            new vec2(1.0f, 0.0f),
+            new vec2(1.0f, 1.0f),
+            new vec2(0.0f, 1.0f),
+        };
+
+        /*!
+            Creates the indices of the terrain mesh.            
+         */
+        private int[] CreateRectangularMeshIndices()
+        {
+            int elementsPerEdge = _nNodesPerEdge - 1;
+            int[] vertdata = new int[elementsPerEdge * elementsPerEdge * 6];
+
+            int vertIndex = 0;
+            int elIndex = 0;
+
+            for (int i = 0; i < elementsPerEdge; i++)
+            {
+                for (int j = 0; j < elementsPerEdge; j++)
+                {
+                    int[] localQuadIndices = {
+                        vertIndex,
+                        vertIndex + 1,
+                        vertIndex + _nNodesPerEdge + 1,
+                        vertIndex + _nNodesPerEdge
+                    };
+
+                    vertdata[elIndex++] = localQuadIndices[0];
+                    vertdata[elIndex++] = localQuadIndices[1];
+                    vertdata[elIndex++] = localQuadIndices[2];
+                    vertdata[elIndex++] = localQuadIndices[0];
+                    vertdata[elIndex++] = localQuadIndices[2];
+                    vertdata[elIndex++] = localQuadIndices[3];
+                    vertIndex++;
+                }
+                vertIndex++;
+            }
+
+            return vertdata;
+        }
+
+        /*!
+            Creates the static data for the terrain:
+            - XY coordinates and UV texture coordinates
+         */
+        private VertexDataStatic[] CreateRectangularMeshIndexed()
+        {
+            int elementsPerEdge = _nNodesPerEdge - 1;
+            VertexDataStatic[] vertdata = new VertexDataStatic[_nNodesPerEdge * _nNodesPerEdge];
+
+            vec2 startPos = new vec2(_centerPos.x, _centerPos.y);
+            startPos -= new vec2(_edgeSize / 2.0f, _edgeSize / 2.0f);
+            vec2 cornerPos = startPos;
+
+            float elsize = _edgeSize / (float)elementsPerEdge;
+
+            int index = 0;
+            for (int i = 0; i < _nNodesPerEdge; i++)
+            {
+                for (int j = 0; j < _nNodesPerEdge; j++)
+                {
+                    vertdata[index].posXY = cornerPos;
+                    vertdata[index].uv = new vec2((float)j / (float)(_nNodesPerEdge - 1), (float)i / (float)(_nNodesPerEdge - 1));
+                    index++;
+                    cornerPos.x += elsize;
+                }
+                cornerPos.x = startPos.x;
+                cornerPos.y += elsize;
+            }
+            return vertdata;
+        }
+
+
+
+        /*!
+         Using CreateRectangularMeshIndex instead now.       
+         */
+        private VertexDataStatic[] CreateRectangularMesh()
+        {
+            int elementsPerEdge = _nNodesPerEdge - 1;
+            VertexDataStatic[] vertdata = new VertexDataStatic[elementsPerEdge * elementsPerEdge * 6];
+
+            vec2 startPos = new vec2(-0.5f * _edgeSize);
+            vec2 cornerPos = startPos;
+
+            float elsize = _edgeSize / (float)elementsPerEdge;
+            vec2[] elnodeoffsets = GetDualTriangleNodeOffsets2D(elsize);
+            vec2[] uvcoords = unitUVcoords;
+
+            int index = 0;
+            for (int i = 0; i < elementsPerEdge; i++)
+            {
+                for (int j = 0; j < elementsPerEdge; j++)
+                {
+                    for (int k = 0; k < 6; k++)
+                    {
+                        vec2 pos = cornerPos + elnodeoffsets[k];
+                        vertdata[index].posXY = pos;
+                        vertdata[index].uv = uvcoords[k];
+                        index++;
+                    }
+                    cornerPos.x += elsize;
+                }
+                cornerPos.x = startPos.x;
+                cornerPos.y += elsize;
+            }
+            return vertdata;
+        }
+
+
+        /*!
+         Using CreateRectangularMeshHeightDataIndex instead now.       
+         */
+        private VertexDataDynamic[] CreateRectangularMeshHeightData(
+          ISurface3Dfunction surfaceFunc,
+          IColorFunction colorFunc)
         {
             int elementsPerEdge = _nNodesPerEdge - 1;
             VertexDataDynamic[] vertData = new VertexDataDynamic[elementsPerEdge * elementsPerEdge * 6];
             vec3[] vertPosition = new vec3[elementsPerEdge * elementsPerEdge * 6];
 
-            vec3 startPos = new vec3(-_sizeXY / 2.0f, -_sizeXY / 2.0f, 0.0f);
+            vec3 startPos = new vec3(-_edgeSize / 2.0f, -_edgeSize / 2.0f, 0.0f);
             vec3 cornerPos = startPos;
 
-            float elSize = _sizeXY / (float)elementsPerEdge;
+            float elSize = _edgeSize / (float)elementsPerEdge;
             vec3[] elNodeOffsets = GetDualTriangleNodeOffsets3D(elSize);
             vec2[] uvCoords = unitUVcoords;
 
@@ -174,10 +373,6 @@ namespace rlglnet
                         colorFunc.Value(out vertData[index].color, cscale, normal);
                         for (int c = 0; c < 3; c++) vertData[index].color[c] = col[c];
 
-                        //vertData[index].color = new vec3(
-                        //    0.5f + 0.5f * cscale,
-                        //    1.0f - 0.8f * cscale,
-                        //    1.0f - 0.5f * cscale);
                         vertData[index].normal = normal;
                         vertData[index++].tangent = tangent;
                     }
@@ -189,64 +384,22 @@ namespace rlglnet
             return vertData;
         }
 
-        private VertexDataDynamic[] CreateRectangularMeshHeightDataIndexed(
-            ISurface3Dfunction surfaceFunc,
-            IColorFunction colorFunc)
-        {
-            int elementsPerEdge = _nNodesPerEdge - 1;
-            VertexDataDynamic[] vertData = new VertexDataDynamic[_nNodesPerEdge * _nNodesPerEdge];
-            vec3[] vertPosition = new vec3[_nNodesPerEdge * _nNodesPerEdge];
-
-            vec3 startPos = _centerPos;
-            startPos -= new vec3(_sizeXY / 2.0f, _sizeXY / 2.0f, 0.0f);
-            vec3 cornerPos = startPos;
-
-            float elSize = _sizeXY / (float)elementsPerEdge;
-
-            vec3 tangent = new vec3(1.0f, 0.0f, 0.0f);  //should be calculated
-            vec3 color = new vec3(1.0f, 0.0f, 0.0f);
-
-            //Get all position coordinates:
-            int index = 0;
-            float dL = elSize / 10.0f;
-            for (int i = 0; i < _nNodesPerEdge; i++)
-            {
-                for (int j = 0; j < _nNodesPerEdge; j++)
-                {
-                    vertData[index].posZ = surfaceFunc.Value(cornerPos.x, cornerPos.y);
-                    vertData[index].normal = surfaceFunc.Normal(cornerPos.x, cornerPos.y, dL);
-                    vertData[index].tangent = tangent;
-
-                    float colorScale = surfaceFunc.NormalizeValue(vertData[index].posZ);
-                    colorFunc.Value(out vertData[index].color, colorScale, vertData[index].normal);
-                    index++;
-
-                    cornerPos.x += elSize;
-                }
-                cornerPos.x = startPos.x;
-                cornerPos.y += elSize;
-            }
-            return vertData; 
-        }
-
-
-
         /*!
-         
-        Given two triangles making up one rectangle as shows below.
-        Where the triangles have overlapping but not shared nodes.
-        This function returns a vector containing the offsets as 3d vectors
-        from the lower/bottom corner (x = 0, y = 0) to the individual nodes.
 
-        Nodes are ordered as on the figure
-            ^ Y
-            |
-         3&6x-----x5
-            | \   |
-            |   \ |
-           1x-----x2&4   ---> X
-         
-         */
+      Given two triangles making up one rectangle as shows below.
+      Where the triangles have overlapping but not shared nodes.
+      This function returns a vector containing the offsets as 3d vectors
+      from the lower/bottom corner (x = 0, y = 0) to the individual nodes.
+
+      Nodes are ordered as on the figure
+          ^ Y
+          |
+       3&6x-----x5
+          | \   |
+          |   \ |
+         1x-----x2&4   ---> X
+
+       */
         private static vec3[] GetDualTriangleNodeOffsets3D(float elSize /*!size of element*/)
         {
             return new vec3[] {
@@ -264,8 +417,8 @@ namespace rlglnet
         private static vec2[] GetDualTriangleNodeOffsets2D(float elSize /*!size of element*/)
         {
             return new vec2[] {
-                new vec2(0.0f,   0.0f), 
-                new vec2(elSize, 0.0f), 
+                new vec2(0.0f,   0.0f),
+                new vec2(elSize, 0.0f),
                 new vec2(0.0f,   elSize),
                 new vec2(elSize, 0.0f),
                 new vec2(elSize, elSize),
@@ -273,121 +426,10 @@ namespace rlglnet
             };
         }
 
-        /*!
-        Given two triangles making up one rectangle as shows below.
-        Where the triangles have overlapping but not shared nodes.
-        This function returns a vector containing the UV coordinates
-        of each node, where coords go from 0.0 to 1.0 from lower/bottom
-        to top/right
-
-        Nodes are ordered as on the figure 
-            ^ Y
-            |
-         3&6x-----x5
-            | \   |
-            |   \ |
-           1x-----x2&4   ---> X
-         */
-        public readonly vec2[] unitUVcoords = new vec2[]{
-            new vec2(0.0f, 0.0f),
-            new vec2(1.0f, 0.0f),
-            new vec2(0.0f, 1.0f),
-            new vec2(1.0f, 0.0f),
-            new vec2(1.0f, 1.0f),
-            new vec2(0.0f, 1.0f),
-        };
-
-       private int[] CreateRectangularMeshIndices()
-        {
-            int elementsPerEdge = _nNodesPerEdge - 1;
-            int[] vertdata = new int[elementsPerEdge * elementsPerEdge * 6];
-
-            int vertIndex = 0;
-            int elIndex = 0;
-
-            for (int i = 0; i < elementsPerEdge; i++)
-            {
-                for (int j = 0; j < elementsPerEdge; j++)
-                {
-                    int[] localQuadIndices = {
-                        vertIndex,
-                        vertIndex + 1,
-                        vertIndex + _nNodesPerEdge + 1,
-                        vertIndex + _nNodesPerEdge
-                    };
-
-                    vertdata[elIndex++] = localQuadIndices[0];
-                    vertdata[elIndex++] = localQuadIndices[1];
-                    vertdata[elIndex++] = localQuadIndices[2];
-                    vertdata[elIndex++] = localQuadIndices[0];
-                    vertdata[elIndex++] = localQuadIndices[2];
-                    vertdata[elIndex++] = localQuadIndices[3];
-                    vertIndex++;
-                }
-                vertIndex++;
-            }
-
-            return vertdata;
-        }
-        private VertexDataStatic[] CreateRectangularMeshIndexed()
-        {
-            int elementsPerEdge = _nNodesPerEdge - 1;
-            VertexDataStatic[] vertdata = new VertexDataStatic[_nNodesPerEdge * _nNodesPerEdge];
-
-            vec2 startPos = new vec2(_centerPos.x, _centerPos.y);
-            startPos -= new vec2(_sizeXY / 2.0f, _sizeXY / 2.0f);
-            vec2 cornerPos = startPos;
-
-            float elsize = _sizeXY / (float)elementsPerEdge;
-
-            int index = 0;
-            for (int i = 0; i < _nNodesPerEdge; i++)
-            {
-                for (int j = 0; j < _nNodesPerEdge; j++)
-                {
-                    vertdata[index].posXY = cornerPos;
-                    vertdata[index].uv = new vec2((float)j / (float)(_nNodesPerEdge - 1), (float)i / (float)(_nNodesPerEdge - 1));
-                    index++;
-                    cornerPos.x += elsize;
-                }
-                cornerPos.x = startPos.x;
-                cornerPos.y += elsize;
-            }
-            return vertdata;
-        }
-        private VertexDataStatic[] CreateRectangularMesh()
-        {
-            int elementsPerEdge = _nNodesPerEdge - 1;
-            VertexDataStatic[] vertdata = new VertexDataStatic[elementsPerEdge * elementsPerEdge * 6];
-
-            vec2 startPos = new vec2(-0.5f * _sizeXY);
-            vec2 cornerPos = startPos;
-
-            float elsize = _sizeXY / (float)elementsPerEdge;
-            vec2[] elnodeoffsets = GetDualTriangleNodeOffsets2D(elsize);
-            vec2[] uvcoords = unitUVcoords;
-
-            int index = 0;
-            for (int i = 0; i < elementsPerEdge; i++)
-            {
-                for (int j = 0; j < elementsPerEdge; j++)
-                {
-                    for (int k = 0; k < 6; k++)
-                    {
-                        vec2 pos = cornerPos + elnodeoffsets[k];
-                        vertdata[index].posXY = pos;
-                        vertdata[index].uv = uvcoords[k];
-                        index++;
-                    }
-                    cornerPos.x += elsize;
-                }
-                cornerPos.x = startPos.x;
-                cornerPos.y += elsize;
-            }
-            return vertdata;
-        }
 
     }
+
+
 
 
 }

@@ -24,7 +24,7 @@ namespace rlglnet
 
         //Move to specific App
         private float meshBaseSize;
-        private List<rlglMesh> terrainMeshes;
+        private List<rlglSurfaceMesh> terrainMeshes;
         rlglQuadTree terrainQuadTree;
         List<rlglQuadTreeElement> terrainQuads;
         TerrainShader terrainShader;
@@ -93,13 +93,16 @@ namespace rlglnet
             terrainQuadTree = new rlglQuadTree(meshBaseSize, 5);
             terrainQuads = terrainQuadTree.GetQuads(new vec3(0.0f, 0.0f, 0.0f));
 
-            terrainMeshes = new List<rlglMesh>();
-            int meshIndex = 0;
+            terrainMeshes = new List<rlglSurfaceMesh>();
             foreach (rlglQuadTreeElement quad in terrainQuads)
             {
-                terrainMeshes.Add(new rlglMesh());
-                terrainMeshes[meshIndex++].initializeMesh(nNodesPerEdge, quad.Center, quad.Size());
+                rlglSurfaceMesh mesh = new rlglSurfaceMesh(quad.Center, quad.Size(), nNodesPerEdge);
+                mesh.Init();
+                terrainMeshes.Add(mesh);
 
+
+                //Move to InitRenderObjects for consistency:
+                rlglRenderableObject obj = new rlglRenderableObject(mesh, terrainShader);
             }
         }
         public void InitRenderObjects()
@@ -110,9 +113,6 @@ namespace rlglnet
         {
             if (focused)
             {
-                //int w, h;
-                //Glfw.GetWindowSize(window, out w, out h);
-                //Glfw.SetCursorPosition(window, (double)w / 2.0, (double)h / 2.0);
                 cameraControl.off = false;
                 Glfw.SetInputMode(window, GLFW.InputMode.Cursor, (int)GLFW.CursorMode.Hidden);
             }
@@ -127,12 +127,12 @@ namespace rlglnet
 
             while (!Glfw.WindowShouldClose(window))
             {
-                loop();
+                Loop();
             }
             Glfw.Terminate();
         }
 
-        public void loop()
+        public void Loop()
         {
             // Swap fore/back framebuffers, and poll for operating system events.
             Glfw.SwapBuffers(window);
@@ -182,7 +182,7 @@ namespace rlglnet
                 terrainShader.SetModelMatrixUniform(modelM);
                 for (int i = 0; i < terrainMeshes.Count; i++)
                 {
-                    terrainMeshes[i].translate(new vec3(translation, 0.0f));
+                    terrainMeshes[i].Translate(new vec3(translation, 0.0f));
                 }
             }
 
@@ -194,7 +194,7 @@ namespace rlglnet
                         (float)i / (float)terrainMeshes.Count, 
                         (float)i / (float)terrainMeshes.Count)
                     );
-                terrainMeshes[i].draw();
+                terrainMeshes[i].Draw();
             }
         }
 

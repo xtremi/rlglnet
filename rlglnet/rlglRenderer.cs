@@ -34,7 +34,7 @@ namespace rlglnet
         protected void Render(rlglRenderableObject obj)
         {
 
-            obj.Mesh.draw();
+            obj.Mesh.Draw();
 
         }
 

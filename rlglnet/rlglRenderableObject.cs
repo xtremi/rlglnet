@@ -5,7 +5,7 @@ using System.Text;
 namespace rlglnet
 {
 
-    class rlglObject
+    public class rlglObject
     {
         public rlglObject()
         {
@@ -60,6 +60,11 @@ namespace rlglnet
         public rlglMesh   Mesh { get; private set; }
         public GlmNet.vec4 Color { get; set; } = new GlmNet.vec4(1.0f);
 
+        public rlglRenderableObject(rlglMesh mesh, rlglShader shader)
+        {
+            Mesh = mesh;
+            Shader = shader;
+        }
 
     }
 }

@@ -98,7 +98,7 @@ namespace rlglGUIwpf
 
         private void RlglLoop(object sender, EventArgs e)
         {
-            rlglBaseApp.loop();
+            rlglBaseApp.Loop();
 
             double x, y;
             GLFW.Glfw.GetCursorPosition(rlglBaseApp.window, out x, out y);

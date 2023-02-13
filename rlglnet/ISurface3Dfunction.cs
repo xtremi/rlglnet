@@ -3,7 +3,7 @@ using System;
 
 namespace rlglnet
 {
-    interface ISurface3Dfunction
+    public interface ISurface3Dfunction
     {
         float Value(float x, float y);
         vec3 Normal(float x, float y, float ds);
