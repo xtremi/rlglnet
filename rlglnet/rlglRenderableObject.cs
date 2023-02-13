@@ -54,7 +54,7 @@ namespace rlglnet
         public bool NeedModelMatrixCalc { get; private set; } = false;
 
     }
-    class rlglRenderableObject : rlglObject
+    public class rlglRenderableObject : rlglObject
     {
         public rlglShader Shader { get; private set; }
         public rlglMesh   Mesh { get; private set; }
