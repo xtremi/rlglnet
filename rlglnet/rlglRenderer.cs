@@ -5,7 +5,13 @@ namespace rlglnet
 {
     public class rlglRenderer
     {
-        public void Render(List<rlglRenderableObject> objects)
+        List<rlglRenderableObject> objects = new List<rlglRenderableObject>();
+
+        public void AddObject(rlglRenderableObject obj)
+        {
+            objects.Add(obj);
+        }
+        public void Render()
         {
             foreach (rlglRenderableObject obj in objects)
             {
@@ -21,7 +27,7 @@ namespace rlglnet
             if (obj.Shader != previousShader)
             {
                 obj.Shader.Use();
-                obj.Shader.SetUniformValues();  //uniforms used for all object of shader
+                //obj.Shader.SetUniformValues();  //uniforms used for all object of shader --> this is not really needed
             }
             if (obj.Mesh != previousMesh)
             {
@@ -33,9 +39,7 @@ namespace rlglnet
 
         protected void Render(rlglRenderableObject obj)
         {
-
             obj.Mesh.Draw();
-
         }
 
 

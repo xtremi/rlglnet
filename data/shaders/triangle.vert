@@ -7,10 +7,14 @@ layout (location = 3) in vec3 color;
 layout (location = 4) in vec3 normal;
 layout (location = 5) in vec3 tangent;
 
-uniform vec3 uColor;
+
+/*world specific*/
 uniform mat4 uVPmat;
-uniform mat4 uMmat;
 uniform vec3 uLightPos;
+
+/*Object specific */
+uniform mat4 uMmat;
+uniform vec3 uColor;
 
 out vec3 vertColor;
 out vec3 fragPos;

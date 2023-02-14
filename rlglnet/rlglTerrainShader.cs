@@ -2,7 +2,7 @@
 
 namespace rlglnet
 {
-    public class TerrainShader : rlglShader
+    public class rlglTerrainShader : rlglShader
     {
         int uniColLoc;
         int uniVPloc;
@@ -10,9 +10,9 @@ namespace rlglnet
         int uniLightPos;
         public override void LocateUniforms()
         {
-            uniColLoc = glGetUniformLocation(ID, "uColor");
-            uniVPloc = glGetUniformLocation(ID, "uVPmat");
-            uniMloc = glGetUniformLocation(ID, "uMmat");
+            uniColLoc   = glGetUniformLocation(ID, "uColor");
+            uniVPloc    = glGetUniformLocation(ID, "uVPmat");
+            uniMloc     = glGetUniformLocation(ID, "uMmat");
             uniLightPos = glGetUniformLocation(ID, "uLightPos");
         }
         public void SetColorUniform(GlmNet.vec3 color)

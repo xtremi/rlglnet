@@ -7,51 +7,77 @@ namespace rlglnet
 
     public class rlglObject
     {
+        public bool NeedModelMatrixCalc { get; private set; } = false;
+
+
         public rlglObject()
         {
-            ScaleVec = new GlmNet.vec3(1.0f);
-            Position = new GlmNet.vec3(0.0f);
-            RotAxis = new GlmNet.vec3(1.0f, 0.0f, 0.0f);
-            RotAngle = 1.0f;
         }
+        private GlmNet.vec3 _scaleVec;
+        private GlmNet.vec3 _position;
+        private GlmNet.vec3 _rotAxis;
+        private float _rotAngle;
         public GlmNet.vec3 ScaleVec
         {
-            get { return ScaleVec; }
+            get { return _scaleVec; }
             set {
-                ScaleVec = value;
+                _scaleVec = value;
                 NeedModelMatrixCalc = true;
             } 
         }
         public GlmNet.vec3 Position
         {
-            get { return Position; }
+            get { return _position; }
             set
             {
-                Position = value;
+                _position = value;
                 NeedModelMatrixCalc = true;
             }
         }
         public GlmNet.vec3 RotAxis
         {
-            get { return RotAxis; }
+            get { return _rotAxis; }
             set
             {
-                RotAxis = value;
+                _rotAxis = value;
                 NeedModelMatrixCalc = true;
             }
         }
         public float RotAngle
         {
-            get { return RotAngle; }
+            get { return _rotAngle; }
             set
             {
-                RotAngle = value;
+                _rotAngle = value;
                 NeedModelMatrixCalc = true;
             }
         }
-        public GlmNet.mat4 ModelMatrix { get; set; } = new GlmNet.mat4(1.0f);
 
-        public bool NeedModelMatrixCalc { get; private set; } = false;
+        private GlmNet.mat4 _modelMatrix = new GlmNet.mat4(1.0f);
+        public GlmNet.mat4 ModelMatrix { 
+            get {
+                if (NeedModelMatrixCalc)
+                {
+                    CalculateModelMatrix();
+                    NeedModelMatrixCalc = false;
+                }
+                return _modelMatrix;
+            }
+            set {
+                NeedModelMatrixCalc = false;
+                _modelMatrix = value;
+            } }
+
+        public void CalculateModelMatrix()
+        {
+            GlmNet.mat4 m = new GlmNet.mat4(1.0f);
+            GlmNet.mat4 translation = GlmNet.glm.translate(m, _position);
+            GlmNet.mat4 rotation = GlmNet.glm.rotate(m, _rotAngle, _rotAxis);
+            GlmNet.mat4 scale = GlmNet.glm.scale(m, _scaleVec);
+
+            _modelMatrix = translation * rotation * scale;
+            NeedModelMatrixCalc = false;
+        }
 
     }
     public class rlglRenderableObject : rlglObject
@@ -66,5 +92,24 @@ namespace rlglnet
             Shader = shader;
         }
 
+        public virtual void SetShaderUniformValues()
+        {
+        }
     }
+
+    public class rlglTerrainMeshObject : rlglRenderableObject
+    {
+        public rlglTerrainMeshObject(rlglSurfaceMesh mesh, rlglTerrainShader shader) : base(mesh, shader)
+        {
+        }
+        public override void SetShaderUniformValues()
+        {
+            ((rlglTerrainShader)Shader).SetModelMatrixUniform(ModelMatrix);
+            ((rlglTerrainShader)Shader).SetColorUniform(new GlmNet.vec3(Color.x, Color.y, Color.z) );
+        }
+
+    }
+
+
+
 }
