@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Collections.Generic;
 
 namespace rlglnet
@@ -10,6 +11,10 @@ namespace rlglnet
         public void AddObject(rlglRenderableObject obj)
         {
             objects.Add(obj);
+        }
+        public void Remove(rlglTerrainMeshObject obj)
+        {
+            objects.Remove(obj);
         }
         public void Render()
         {
@@ -46,5 +51,6 @@ namespace rlglnet
         rlglShader previousShader = null;
         rlglMesh previousMesh = null;
 
+  
     }
 }

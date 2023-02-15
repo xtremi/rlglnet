@@ -110,6 +110,10 @@ namespace rlglnet
                     sizeof(VertexDataDynamic) * vertexDataDynamic.Length, vd, GL_DYNAMIC_DRAW);
             }
         }
+        public unsafe void UpdateMeshHeight()
+        {
+            if(_currentSurfaceFunction != null) UpdateMeshHeight(_currentSurfaceFunction);
+        }
 
         public unsafe void UpdateMeshHeight(ISurface3Dfunction surfaceFunction)
         {

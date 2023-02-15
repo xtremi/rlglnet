@@ -12,6 +12,8 @@ namespace rlglnet
     public class rlglBaseApp
     {
         //BaseApp
+        private FocusCallback WindowFocusCallback;
+
         rlglRenderer renderer;
         public Window window { get; private set; }
         private CameraControl cameraControl;
@@ -22,13 +24,14 @@ namespace rlglnet
         Random random;
 
 
-        private FocusCallback WindowFocusCallback;
 
         //Move to specific App
         private float meshBaseSize;
-        private List<rlglSurfaceMesh> terrainMeshes;
+        //private List<rlglSurfaceMesh> terrainMeshes;
+        private Terrain.rlglTerrainMeshManager terrainMeshManager;
         rlglQuadTree terrainQuadTree;
         List<rlglQuadTreeElement> terrainQuads;
+        List<rlglTerrainMeshObject> terrainMeshObjects;
         rlglTerrainShader terrainShader;
 
         private void InitTraceLog()
@@ -43,6 +46,11 @@ namespace rlglnet
         {
             random = new Random(123);
             renderer = new rlglRenderer();
+            terrainMeshManager = new Terrain.rlglTerrainMeshManager(40);
+            meshBaseSize = 500.0f;
+            terrainQuadTree = new rlglQuadTree(meshBaseSize, 5);
+            terrainMeshObjects = new List<rlglTerrainMeshObject>();
+
             InitTraceLog();
             Trace.WriteLine("rlglBaseApp::InitTraceLog");
             InitWindow(windowSize);
@@ -92,25 +100,47 @@ namespace rlglnet
         }
         public void InitMeshes()
         {
-            int nNodesPerEdge = 40;
-            meshBaseSize = 500.0f;
-            terrainQuadTree = new rlglQuadTree(meshBaseSize, 6);
-            terrainQuads = terrainQuadTree.GetQuads(new vec3(50.0f, 200.0f, 0.0f));
-
-            terrainMeshes = new List<rlglSurfaceMesh>();
+            terrainQuads = terrainQuadTree.GetQuads(new vec3(0.0f, 0.0f, 0.0f));
             int i = 0;
+
             foreach (rlglQuadTreeElement quad in terrainQuads)
             {
-                rlglSurfaceMesh mesh = new rlglSurfaceMesh(quad.Center, quad.Size(), nNodesPerEdge);
-                mesh.Init();
-                terrainMeshes.Add(mesh);
+                rlglSurfaceMesh mesh = terrainMeshManager.GetTerrainMeshChunk(quad.Center, quad.Size());
+                
+                //Move to InitRenderObjects for consistency:
+                rlglTerrainMeshObject obj = new rlglTerrainMeshObject(mesh, terrainShader);
+                obj.Color = new vec4(RandomColor(), 1.0f);
+                renderer.AddObject(obj);
+                terrainMeshObjects.Add(obj);
+            }
+        }
+
+
+        void updateTerrain()
+        {
+            vec2 currentTerrainPos = new vec2(camera.CamPos.x, camera.CamPos.y);
+            terrainQuadTree.Reset();
+            terrainQuads = terrainQuadTree.GetQuads(new vec3(currentTerrainPos, 0.0f));
+
+            foreach (rlglTerrainMeshObject obj in terrainMeshObjects)
+            {
+                renderer.Remove(obj);
+            }
+            terrainMeshObjects.Clear();
+
+            foreach (rlglQuadTreeElement quad in terrainQuads)
+            {
+                rlglSurfaceMesh mesh = terrainMeshManager.GetTerrainMeshChunk(quad.Center, quad.Size());
 
                 //Move to InitRenderObjects for consistency:
                 rlglTerrainMeshObject obj = new rlglTerrainMeshObject(mesh, terrainShader);
                 obj.Color = new vec4(RandomColor(), 1.0f);
-                i++;
                 renderer.AddObject(obj);
+                terrainMeshObjects.Add(obj);
             }
+
+
+
         }
         public void InitRenderObjects()
         {
@@ -176,6 +206,9 @@ namespace rlglnet
 
             // Clear the framebuffer to defined background color
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+            updateTerrain();
             renderer.Render();
 
             //Update terrain:
@@ -231,7 +264,7 @@ namespace rlglnet
         {
             FlatSurfaceFunction surfaceFunction = new FlatSurfaceFunction();
             surfaceFunction.Height = 0.0f;
-            foreach (rlglSurfaceMesh mesh in terrainMeshes)
+            foreach (rlglSurfaceMesh mesh in terrainMeshManager)
             {
                 mesh.UpdateMeshHeight(surfaceFunction);
             }
@@ -241,7 +274,7 @@ namespace rlglnet
             SineSurfaceFunction surfaceFunction = new SineSurfaceFunction();
             surfaceFunction.Amplitude = height;
             surfaceFunction.WaveLength = waveLength;
-            foreach (rlglSurfaceMesh mesh in terrainMeshes)
+            foreach (rlglSurfaceMesh mesh in terrainMeshManager)
             {
                 mesh.UpdateMeshHeight(surfaceFunction);
             }
@@ -251,7 +284,7 @@ namespace rlglnet
             PlaneWaveFunction surfaceFunction = new PlaneWaveFunction();
             surfaceFunction.Amplitude = height;
             surfaceFunction.WaveLength = waveLength;
-            foreach (rlglSurfaceMesh mesh in terrainMeshes)
+            foreach (rlglSurfaceMesh mesh in terrainMeshManager)
             {
                 mesh.UpdateMeshHeight(surfaceFunction);
             }
@@ -265,7 +298,7 @@ namespace rlglnet
             surfaceFunction.Persistance = persistance;
             surfaceFunction.Roughness = roughness;
             surfaceFunction.Offset = offset;
-            foreach (rlglSurfaceMesh mesh in terrainMeshes)
+            foreach (rlglSurfaceMesh mesh in terrainMeshManager)
             {
                 mesh.UpdateMeshHeight(surfaceFunction);
             }
