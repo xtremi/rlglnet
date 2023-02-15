@@ -81,5 +81,10 @@ namespace rlglnet
             return quads;
         }
 
+        public void Reset()
+        {
+            root = new rlglQuadTreeElement(this, new GlmNet.vec3(0.0f), 0);
+        }
+
     }
 }

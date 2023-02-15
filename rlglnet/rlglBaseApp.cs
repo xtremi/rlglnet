@@ -19,6 +19,8 @@ namespace rlglnet
         private vec2 previousCenter = new vec2(0.0f);
         long frameCounter = 0;
         vec2 windowCenter;
+        Random random;
+
 
         private FocusCallback WindowFocusCallback;
 
@@ -39,6 +41,7 @@ namespace rlglnet
 
         public void InitApp(vec2 windowSize)
         {
+            random = new Random(123);
             renderer = new rlglRenderer();
             InitTraceLog();
             Trace.WriteLine("rlglBaseApp::InitTraceLog");
@@ -91,8 +94,8 @@ namespace rlglnet
         {
             int nNodesPerEdge = 40;
             meshBaseSize = 500.0f;
-            terrainQuadTree = new rlglQuadTree(meshBaseSize, 5);
-            terrainQuads = terrainQuadTree.GetQuads(new vec3(0.0f, 0.0f, 0.0f));
+            terrainQuadTree = new rlglQuadTree(meshBaseSize, 6);
+            terrainQuads = terrainQuadTree.GetQuads(new vec3(50.0f, 200.0f, 0.0f));
 
             terrainMeshes = new List<rlglSurfaceMesh>();
             int i = 0;
@@ -102,13 +105,9 @@ namespace rlglnet
                 mesh.Init();
                 terrainMeshes.Add(mesh);
 
-
                 //Move to InitRenderObjects for consistency:
                 rlglTerrainMeshObject obj = new rlglTerrainMeshObject(mesh, terrainShader);
-                obj.Color = new vec4(
-                            (float)i / (float)terrainQuads.Count,
-                            (float)i / (float)terrainQuads.Count,
-                            (float)i / (float)terrainQuads.Count, 1.0f);
+                obj.Color = new vec4(RandomColor(), 1.0f);
                 i++;
                 renderer.AddObject(obj);
             }
@@ -177,8 +176,10 @@ namespace rlglnet
 
             // Clear the framebuffer to defined background color
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            renderer.Render();
 
             //Update terrain:
+            /*
             vec2 currentTerrainPos = new vec2(camera.CamPos.x, camera.CamPos.y);
             float distance = glm.distance(currentTerrainPos, previousCenter);
             float minDistance = terrainQuadTree._totalSize / MathF.Pow(2.0f, terrainQuadTree._maxSubdivisions);
@@ -194,21 +195,8 @@ namespace rlglnet
                 {
                     terrainMeshes[i].Translate(new vec3(translation, 0.0f));
                 }
-            }
+            }*/
 
-            renderer.Render();
-
-
-            //for (int i = 0; i < terrainMeshes.Count; i++)
-            //{
-            //    terrainShader.SetColorUniform(
-            //        new vec3(
-            //            (float)i /(float)terrainMeshes.Count, 
-            //            (float)i / (float)terrainMeshes.Count, 
-            //            (float)i / (float)terrainMeshes.Count)
-            //        );
-            //    terrainMeshes[i].Draw();
-            //}
         }
 
         private void PrepareContext()
@@ -282,6 +270,16 @@ namespace rlglnet
                 mesh.UpdateMeshHeight(surfaceFunction);
             }
         }
+
+
+        vec3 RandomColor()
+        {
+            return new vec3(
+                (float)random.NextDouble(),
+                (float)random.NextDouble(),
+                (float)random.NextDouble());
+        }
+
 
     }
 }
