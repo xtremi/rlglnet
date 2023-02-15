@@ -45,6 +45,7 @@ namespace rlglnet
             _nNodesPerEdge = nNodesPerEdge;
             _nElementsIndexed = (_nNodesPerEdge - 1) * (_nNodesPerEdge - 1);
             _nNodesNotIndexed = _nElementsIndexed * 6;
+            _indexed = true;
         }
 
         struct VertexDataStatic
@@ -276,7 +277,7 @@ namespace rlglnet
                 for (int j = 0; j < _nNodesPerEdge; j++)
                 {
                     vertdata[index].posXY = cornerPos;
-                    vertdata[index].uv = new vec2((float)j / (float)(_nNodesPerEdge - 1), (float)i / (float)(_nNodesPerEdge - 1));
+                    vertdata[index].uv = new vec2((float)j / (float)elementsPerEdge, (float)i / (float)elementsPerEdge);
                     index++;
                     cornerPos.x += elsize;
                 }
