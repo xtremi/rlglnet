@@ -10,6 +10,7 @@ namespace rlglnet
         protected int _nNodesNotIndexed = 0;
         public abstract void Init();
 
+        public abstract void Delete();
         public virtual void Draw()
         {
             if (!_indexed) { 
@@ -28,6 +29,7 @@ namespace rlglnet
         {
             glBindVertexArray(VAO);
         }
+
 
     }
 

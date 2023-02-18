@@ -59,7 +59,7 @@ namespace rlglnet
 
     abstract class SurfaceFunction : ISurface3Dfunction
     {
-        public float Height { protected get; set; }
+        public float Height { protected get; set; } = 0.0f;
         public virtual float Value(float x, float y)
         {
             return 0.0f;

@@ -403,6 +403,14 @@ namespace rlglnet
             };
         }
 
+        public override void Delete()
+        {
+            glDeleteVertexArray(VAO);
+            glDeleteBuffer(VBO_S);
+            glDeleteBuffer(VBO_D);
+            glDeleteBuffer(EBO_S);
+        }
+
 
     }
 

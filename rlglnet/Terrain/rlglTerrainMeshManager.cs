@@ -1,37 +1,96 @@
 ﻿
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace rlglnet.Terrain
 {
-    class rlglTerrainMeshManager : IEnumerable<rlglSurfaceMesh>
+    public class rlglTerrainChunk
     {
-        private Dictionary<string, rlglSurfaceMesh> _meshMap = new Dictionary<string, rlglSurfaceMesh>();
+        public rlglSurfaceMesh mesh; 
+        public rlglTerrainMeshObject obj;
+        public bool active = true;
+        public string key = "";
+    }
+    class rlglTerrainMeshManager : IEnumerable<rlglTerrainChunk>
+    {
+        private rlglTerrainShader _shader;
+        private Dictionary<string, rlglTerrainChunk> _meshMap = new Dictionary<string, rlglTerrainChunk>();
         private int _nNodesPerEdge;
-        public rlglTerrainMeshManager(int nNodesPerEdge) => _nNodesPerEdge = nNodesPerEdge;
+        private ISurface3Dfunction _currentSurfaceFunc;
 
-        rlglSurfaceMesh NewTerrainMeshChunk(GlmNet.vec3 center, float size)
+        public rlglTerrainMeshManager(int nNodesPerEdge, rlglTerrainShader shader) 
         {
-            string key = MakeChunkKey(center, size);
-            rlglSurfaceMesh surfaceMesh = new rlglSurfaceMesh(center, size, _nNodesPerEdge);
-            surfaceMesh.Init();
-            surfaceMesh.UpdateMeshHeight();
-            _meshMap[key] = surfaceMesh;
-            return surfaceMesh;
+            _nNodesPerEdge = nNodesPerEdge; 
+            _shader = shader;
+            _currentSurfaceFunc = new FlatSurfaceFunction();
         }
 
-        public rlglSurfaceMesh GetTerrainMeshChunk(GlmNet.vec3 center, float size)
+        //Removes all chunks that are not active
+        public void CleanUp()
+        {
+            foreach (Terrain.rlglTerrainChunk chunk in this)
+            {
+                if (!chunk.active)
+                {
+                    chunk.mesh.Delete();
+                    _meshMap.Remove(chunk.key);
+                }
+            }
+        }
+
+        public void Update()
+        {
+            foreach (rlglTerrainChunk chunk in this)
+            {
+                chunk.active = false;
+            }
+        }
+        rlglTerrainChunk NewTerrainChunk(GlmNet.vec3 center, float size)
+        {
+            string chunkKey = MakeChunkKey(center, size);
+
+            rlglSurfaceMesh terrainMesh = new rlglSurfaceMesh(center, size, _nNodesPerEdge);
+            terrainMesh.Init();
+            terrainMesh.UpdateMeshHeight(_currentSurfaceFunc);
+
+            rlglTerrainMeshObject terrainObj = new rlglTerrainMeshObject(terrainMesh, _shader);
+            terrainObj.Color = new GlmNet.vec4(RandomColor(), 1.0f);
+
+            rlglTerrainChunk terrainChunk = new rlglTerrainChunk { mesh = terrainMesh, obj = terrainObj, key = chunkKey };
+
+            _meshMap[chunkKey] = terrainChunk;
+            return terrainChunk;
+        }
+
+        public bool ChunkExists(GlmNet.vec3 center, float size)
         {
             string key = MakeChunkKey(center, size);
-            rlglSurfaceMesh surfaceMesh;
-            if (_meshMap.TryGetValue(key, out surfaceMesh))
+            rlglTerrainChunk terrainChunk;
+            return _meshMap.TryGetValue(key, out terrainChunk);
+        }
+        public rlglTerrainChunk GetTerrainChunk(GlmNet.vec3 center, float size)
+        {
+            string key = MakeChunkKey(center, size);
+            rlglTerrainChunk terrainChunk;
+            if (_meshMap.TryGetValue(key, out terrainChunk))
             {
-                return surfaceMesh;
+                terrainChunk.active = true;
+                return terrainChunk;
             }
             else
             {
-                return NewTerrainMeshChunk(center, size);
+                return NewTerrainChunk(center, size);
+            }
+        }
+
+        public void UpdateTerrainHeight(ISurface3Dfunction surfaceFunc)
+        {
+            _currentSurfaceFunc = surfaceFunc;
+            foreach (Terrain.rlglTerrainChunk chunk in this)
+            {
+                chunk.mesh.UpdateMeshHeight(surfaceFunc);
             }
         }
 
@@ -46,7 +105,7 @@ namespace rlglnet.Terrain
             return key;
         }
 
-        public IEnumerator<rlglSurfaceMesh> GetEnumerator()
+        public IEnumerator<rlglTerrainChunk> GetEnumerator()
         {
             return _meshMap.Values.GetEnumerator();
         }
@@ -55,5 +114,18 @@ namespace rlglnet.Terrain
         {
             return this.GetEnumerator();
         }
+
+        //Move to utility class
+        GlmNet.vec3 RandomColor()
+        {
+            Random random = new Random(123);
+
+            return new GlmNet.vec3(
+                (float)random.NextDouble(),
+                (float)random.NextDouble(),
+                (float)random.NextDouble());
+        }
+
+
     }
 }
