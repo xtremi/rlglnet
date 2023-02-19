@@ -73,17 +73,19 @@ namespace rlglnet.Terrain
             rlglTerrainChunk terrainChunk;
             return _meshMap.TryGetValue(key, out terrainChunk);
         }
-        public rlglTerrainChunk GetTerrainChunk(GlmNet.vec3 center, float size)
+        public rlglTerrainChunk GetTerrainChunk(GlmNet.vec3 center, float size, out bool isNew)
         {
             string key = MakeChunkKey(center, size);
             rlglTerrainChunk terrainChunk;
             if (_meshMap.TryGetValue(key, out terrainChunk))
             {
                 terrainChunk.active = true;
+                isNew = false;
                 return terrainChunk;
             }
             else
             {
+                isNew = true;
                 return NewTerrainChunk(center, size);
             }
         }

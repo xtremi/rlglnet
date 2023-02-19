@@ -6,7 +6,7 @@ namespace rlglnet
 {
     public class FPScontrol
     {
-        public double maxFPS { get; set; } = 120.0;
+        public double maxFPS { get; set; } = 100.0;
         double maxPeriod()
         {
             return 1.0 / maxFPS;

@@ -37,6 +37,8 @@ namespace rlglnet
         rlglQuadTree terrainQuadTree;
         rlglTerrainShader terrainShader;
 
+        public string FrameStatLog { get; private set; }
+
         private void InitTraceLog()
         {
             string logFile = "log.txt";
@@ -109,20 +111,22 @@ namespace rlglnet
 
             foreach (rlglQuadTreeElement quad in terrainQuads)
             {
-                Terrain.rlglTerrainChunk terrainChunk = terrainMeshManager.GetTerrainChunk(quad.Center, quad.Size());
+                bool isNew;
+                Terrain.rlglTerrainChunk terrainChunk = terrainMeshManager.GetTerrainChunk(quad.Center, quad.Size(), out isNew);
                 renderer.AddObject(terrainChunk.obj);
             }
         }
 
-
+        private int _lastNumberOfChunksGenerated = 0;
         void updateTerrain()
         {
-
             terrainMeshManager.Update();
 
             vec2 currentTerrainPos = new vec2(camera.CamPos.x, camera.CamPos.y);
             terrainQuadTree.Reset();
-            List<rlglQuadTreeElement> newTerrainQuads = terrainQuadTree.GetQuads(new vec3(currentTerrainPos, 0.0f));
+            camera.ComputeFrustum();
+            List<rlglQuadTreeElement> newTerrainQuads = terrainQuadTree.GetQuads(camera.CamPos, camera.Frustum);
+            FrameStatLog += newTerrainQuads.Count + " terrain child quads\n";
 
             //Removing all terrain objects from render queue:
             foreach (Terrain.rlglTerrainChunk chunk in terrainMeshManager)
@@ -131,11 +135,17 @@ namespace rlglnet
             }
 
             //Going through all chunks again:
+            int nNewChunks = 0;
             foreach (rlglQuadTreeElement quad in newTerrainQuads)
             {
-                Terrain.rlglTerrainChunk chunk = terrainMeshManager.GetTerrainChunk(quad.Center, quad.Size());
+                bool isNewChunk;
+                Terrain.rlglTerrainChunk chunk = terrainMeshManager.GetTerrainChunk(quad.Center, quad.Size(), out isNewChunk);
                 renderer.AddObject(chunk.obj);
+                if (isNewChunk) nNewChunks++;
             }
+            if (nNewChunks > 0) _lastNumberOfChunksGenerated = nNewChunks;
+            FrameStatLog += _lastNumberOfChunksGenerated + " new chunks generated\n";
+
 
             terrainMeshManager.CleanUp();
 
@@ -169,6 +179,9 @@ namespace rlglnet
 
         public void Loop()
         {
+            var fullLoopTime = System.Diagnostics.Stopwatch.StartNew();
+            FrameStatLog = "";
+
             if (!_fpsControl.Process())
             {
                 return;
@@ -210,29 +223,18 @@ namespace rlglnet
             // Clear the framebuffer to defined background color
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
+            var stopWatch = System.Diagnostics.Stopwatch.StartNew();
             updateTerrain();
+            stopWatch.Stop();
+            FrameStatLog += "\tUpdateTerrain() time: " + stopWatch.ElapsedMilliseconds + "ms\n";
+
+            stopWatch = System.Diagnostics.Stopwatch.StartNew();
             renderer.Render();
+            stopWatch.Stop();
+            FrameStatLog += "\tRender() time: " + stopWatch.ElapsedMilliseconds + "ms\n";
 
-            //Update terrain:
-            /*
-            vec2 currentTerrainPos = new vec2(camera.CamPos.x, camera.CamPos.y);
-            float distance = glm.distance(currentTerrainPos, previousCenter);
-            float minDistance = terrainQuadTree._totalSize / MathF.Pow(2.0f, terrainQuadTree._maxSubdivisions);
-
-            if(distance > minDistance)
-            {
-                vec2 translation = currentTerrainPos - previousCenter;
-                previousCenter = currentTerrainPos;
-                mat4 modelM = new mat4(1.0f);
-                glm.translate(modelM, new vec3(currentTerrainPos, 0.0f));
-                terrainShader.SetModelMatrixUniform(modelM);
-                for (int i = 0; i < terrainMeshes.Count; i++)
-                {
-                    terrainMeshes[i].Translate(new vec3(translation, 0.0f));
-                }
-            }*/
-
+            fullLoopTime.Stop();
+            FrameStatLog += "Loop time: " + fullLoopTime.ElapsedMilliseconds + "ms\n";
         }
 
         private void PrepareContext()

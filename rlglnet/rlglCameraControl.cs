@@ -39,11 +39,26 @@ namespace rlglnet
         {
             if (Glfw.GetKey(window, GLFW.Keys.W) == InputState.Press)
             {
-                cam.moveForward(KEY_MOVE_SPEED);
+                if (Glfw.GetKey(window, GLFW.Keys.LeftShift) == InputState.Press)
+                {
+                    cam.moveForward(3.0f*KEY_MOVE_SPEED);
+                }
+                else
+                {
+                    cam.moveForward(KEY_MOVE_SPEED);
+                }
+
             }
             else if (Glfw.GetKey(window, GLFW.Keys.S) == InputState.Press)
             {
-                cam.moveBacward(KEY_MOVE_SPEED);
+                if (Glfw.GetKey(window, GLFW.Keys.LeftShift) == InputState.Press)
+                {
+                    cam.moveBacward(3.0f * KEY_MOVE_SPEED);
+                }
+                else
+                {
+                    cam.moveBacward(KEY_MOVE_SPEED);
+                }
             }
             if (Glfw.GetKey(window, GLFW.Keys.A) == InputState.Press)
             {

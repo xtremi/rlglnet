@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text;
+using GlmNet;
 
 namespace rlglnet
 {
@@ -11,7 +10,7 @@ namespace rlglnet
         public int Level { get; private set; }
         rlglQuadTree _quadTree;
 
-        public rlglQuadTreeElement(rlglQuadTree quadTree, GlmNet.vec3 center, int level)
+        public rlglQuadTreeElement(rlglQuadTree quadTree, vec3 center, int level)
         {
             _quadTree = quadTree;
             Center = center;
@@ -28,18 +27,27 @@ namespace rlglnet
             return children != null; 
         }
 
-        public void SplitIfNear(GlmNet.vec3 pos, ref List<rlglQuadTreeElement> quads)
-        {
-            
+        public void SplitIfNear(vec3 pos, ref List<rlglQuadTreeElement> quads, Geometry.Frustum frustum = null)
+        {            
             float distance = MathF.Sqrt(MathF.Pow(Center.x - pos.x, 2.0f) + MathF.Pow(Center.y - pos.y, 2.0f) + MathF.Pow(Center.z - pos.z, 2.0f));
             float maxDistance = Size();
+
+            if (frustum != null && Level > 1)
+            {
+                vec3 dSize = 0.5f * (new GlmNet.vec3(Size(), Size(), 0.0f));
+                if(!frustum.IsInFrustum(new List<vec3>{ Center - dSize, Center + dSize }, true))
+                {
+                    return;//We don't care about this quad or its children
+                }
+            }
+
 
             if (Level < _quadTree._maxSubdivisions && distance < maxDistance)
             {
                 Split();
                 foreach(rlglQuadTreeElement quad in children)
                 {
-                    quad.SplitIfNear(pos, ref quads);
+                    quad.SplitIfNear(pos, ref quads, frustum);
                 }
             }
             else
@@ -74,10 +82,24 @@ namespace rlglnet
             root = new rlglQuadTreeElement(this, new GlmNet.vec3(0.0f), 0);
         }
         
+        /*!
+            Based on position pos, breaks down the quad tree to smaller quads.
+         */
         public List<rlglQuadTreeElement> GetQuads(GlmNet.vec3 pos)
         {
             List<rlglQuadTreeElement> quads = new List<rlglQuadTreeElement>();
             root.SplitIfNear(pos, ref quads);
+            return quads;
+        }
+
+        /*!
+            Based on position pos, breaks down the quad tree to smaller quads.
+            But accounts for frustum. Only quads within frustum are kept
+        */
+        public List<rlglQuadTreeElement> GetQuads(GlmNet.vec3 pos, Geometry.Frustum frustum)
+        {
+            List<rlglQuadTreeElement> quads = new List<rlglQuadTreeElement>();
+            root.SplitIfNear(pos, ref quads, frustum);
             return quads;
         }
 

@@ -101,8 +101,8 @@ namespace rlglGUIwpf
             rlglBaseApp.Loop();
             double x, y;
             GLFW.Glfw.GetCursorPosition(rlglBaseApp.window, out x, out y);
-            textBox.Text = x + ", " + y;
-
+            textBox.Text = x + ", " + y + "\n";
+            textBox.Text += rlglBaseApp.FrameStatLog;
         }
 
 
