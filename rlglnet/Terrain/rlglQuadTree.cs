@@ -34,8 +34,7 @@ namespace rlglnet
 
             if (frustum != null && Level > 1)
             {
-                vec3 dSize = 0.5f * (new GlmNet.vec3(Size(), Size(), 0.0f));
-                if(!frustum.IsInFrustum(new List<vec3>{ Center - dSize, Center + dSize }, true))
+                if(!frustum.IsInFrustum(CornerCoordinates(), true))
                 {
                     return;//We don't care about this quad or its children
                 }
@@ -66,6 +65,17 @@ namespace rlglnet
                 new rlglQuadTreeElement(_quadTree, Center + 0.5f * childrenSize * new GlmNet.vec3( 1.0f,  1.0f, 0.0f), Level + 1),
                 new rlglQuadTreeElement(_quadTree, Center + 0.5f * childrenSize * new GlmNet.vec3(-1.0f,  1.0f, 0.0f), Level + 1)
             };
+        }
+
+        List<vec3> CornerCoordinates()
+        {
+            float halfWidth = 0.5f * Size();
+            return new List<vec3> {
+                    new vec3(Center.x - halfWidth, Center.y - halfWidth, 0.0f),
+                    new vec3(Center.x + halfWidth, Center.y - halfWidth, 0.0f),
+                    new vec3(Center.x + halfWidth, Center.y + halfWidth, 0.0f),
+                    new vec3(Center.x - halfWidth, Center.y + halfWidth, 0.0f),
+                };
         }
 
     }

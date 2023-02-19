@@ -72,12 +72,17 @@ namespace rlglnet.Geometry
 			//This is for large object, larger than the frusum space
 			if (strict)
             {
-				if (plane_outside_of[0] != plane_outside_of[1])
-				{
-					return true;
-				}
-			}
-			return false;
+                for (int i = 1; i < plane_outside_of.Count; i++) {
+                	if (plane_outside_of[0] != plane_outside_of[i]) {
+                		return true;
+                	}
+                }
+                //if (plane_outside_of[0] != plane_outside_of[1])
+                //{
+                //	return true;
+                //}
+            }
+            return false;
 		}
 
     };

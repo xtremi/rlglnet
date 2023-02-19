@@ -24,7 +24,7 @@ namespace rlglnet
 
         public Window window { get; private set; }
         private CameraControl cameraControl;
-        private Camera camera;
+        private Camera currentCamera, camera, camera2;
         private vec2 previousCenter = new vec2(0.0f);
         long frameCounter = 0;
         vec2 windowCenter;
@@ -89,10 +89,17 @@ namespace rlglnet
         {
             //Camera:
             cameraControl = new CameraControl(windowCenter);
-            camera = new Camera(windowSize.x / windowSize.y, 45.0f, 0.1f, 1000.0f);
+            camera = new Camera(windowSize.x / windowSize.y, 45.0f, 0.1f, 1400.0f);
             camera.CamPos = new vec3(0.0f, 0.0f, 125.0f);
             camera.Front = new vec3(1.0f, 1.0f, -1.0f);
             camera.Up = new vec3(0.0f, 0.0f, 1.0f);
+
+            camera2 = new Camera(windowSize.x / windowSize.y, 45.0f, 0.1f, 3000.0f);
+            camera2.CamPos = new vec3(0.0f, 0.0f, 400.0f);
+            camera2.Front = new vec3(1.0f, 1.0f, -1.0f);
+            camera2.Up = new vec3(0.0f, 0.0f, 1.0f);
+
+            currentCamera = camera;
         }
 
         public void InitShaders()
@@ -193,7 +200,7 @@ namespace rlglnet
             //Update cursor and camera:
             double mouseX, mouseY;
             Glfw.GetCursorPosition(window, out mouseX, out mouseY);
-            cameraControl.process(ref camera, window, new vec2((float)mouseX, (float)mouseY));            
+            cameraControl.process(ref currentCamera, window, new vec2((float)mouseX, (float)mouseY));            
             Glfw.SetCursorPosition(window, windowCenter.x, windowCenter.y);
 
             //Update light:
@@ -204,7 +211,7 @@ namespace rlglnet
 
             //Update shader uniforms:
             terrainShader.SetLightPosUniform(lightPos);
-            terrainShader.SetVPmatrixUniform(camera.VPmatrix());
+            terrainShader.SetVPmatrixUniform(currentCamera.VPmatrix());
 
             //Process key events:
             if (Glfw.GetKey(window, GLFW.Keys.Escape) == InputState.Press)
@@ -218,6 +225,14 @@ namespace rlglnet
             else if (Glfw.GetKey(window, GLFW.Keys.Q) == InputState.Release)
             {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            }
+            if (Glfw.GetKey(window, GLFW.Keys.C) == InputState.Press)
+            {
+                currentCamera = camera2;
+            }
+            else
+            {
+                currentCamera = camera;
             }
 
             // Clear the framebuffer to defined background color
