@@ -44,6 +44,7 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
             <RowDefinition Height="120"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -88,12 +89,22 @@
 
         <TextBox Grid.Row="1"
             Grid.ColumnSpan="2"
+            x:Name="FPStextBox"
+            Height="100"
+            Width="auto"
+            Margin="0,0,0,0"
+            Text="FPS" TextWrapping="Wrap" />
+
+        <TextBox Grid.Row="2"
+            Grid.ColumnSpan="2"
             x:Name="textBox"
             Height="100"
             Width="auto"
             Margin="0,0,0,0"
             Text="TextBox" TextWrapping="Wrap" />
 
+        
+        
     </Grid>
 </Window>
 

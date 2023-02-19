@@ -22,17 +22,12 @@ namespace rlglnet
         long frameCounter = 0;
         vec2 windowCenter;
 
-
-
-        //Move to specific App
+        //Move to Terrain Controller App
         private float _meshBaseSize;
         private int _maxQuadTreeSubd;
-
-        //private List<rlglSurfaceMesh> terrainMeshes;
+        private int _nNodesPerEdge;
         Terrain.rlglTerrainMeshManager terrainMeshManager;
         rlglQuadTree terrainQuadTree;
-        //List<rlglQuadTreeElement> terrainQuads;
-        //List<rlglTerrainMeshObject> terrainMeshObjects;
         rlglTerrainShader terrainShader;
 
         private void InitTraceLog()
@@ -46,7 +41,8 @@ namespace rlglnet
         public void InitApp(vec2 windowSize)
         {
             renderer = new rlglRenderer();
-            _meshBaseSize = 500.0f;
+            _nNodesPerEdge = 64;
+            _meshBaseSize = 5000.0f;
             _maxQuadTreeSubd = 5;
             terrainQuadTree = new rlglQuadTree(_meshBaseSize, _maxQuadTreeSubd);
             //terrainMeshObjects = new List<rlglTerrainMeshObject>();
@@ -100,7 +96,7 @@ namespace rlglnet
         }
         public void InitMeshes()
         {
-            terrainMeshManager = new Terrain.rlglTerrainMeshManager(128, terrainShader);
+            terrainMeshManager = new Terrain.rlglTerrainMeshManager(_nNodesPerEdge, terrainShader);
             List<rlglQuadTreeElement> terrainQuads = terrainQuadTree.GetQuads(new vec3(0.0f, 0.0f, 0.0f));
             int i = 0;
 
