@@ -19,12 +19,15 @@ namespace rlglnet.Terrain
         private Dictionary<string, rlglTerrainChunk> _meshMap = new Dictionary<string, rlglTerrainChunk>();
         private int _nNodesPerEdge;
         private ISurface3Dfunction _currentSurfaceFunc;
+        private Random _random;
+
 
         public rlglTerrainMeshManager(int nNodesPerEdge, rlglTerrainShader shader) 
         {
             _nNodesPerEdge = nNodesPerEdge; 
             _shader = shader;
             _currentSurfaceFunc = new FlatSurfaceFunction();
+            _random = new Random(123);
         }
 
         //Removes all chunks that are not active
@@ -118,12 +121,11 @@ namespace rlglnet.Terrain
         //Move to utility class
         GlmNet.vec3 RandomColor()
         {
-            Random random = new Random(123);
 
             return new GlmNet.vec3(
-                (float)random.NextDouble(),
-                (float)random.NextDouble(),
-                (float)random.NextDouble());
+                (float)_random.NextDouble(),
+                (float)_random.NextDouble(),
+                (float)_random.NextDouble());
         }
 
 

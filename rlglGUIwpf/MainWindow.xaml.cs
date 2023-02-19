@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Media;
+using rlglnet;
 
 namespace rlglGUIwpf
 {
@@ -94,8 +95,10 @@ namespace rlglGUIwpf
 
         private void RlglLoop(object sender, EventArgs e)
         {
-            rlglBaseApp.Loop();
+            double fps = rlglBaseApp.Fps();
+            FPStextBox.Text = fps.ToString();
 
+            rlglBaseApp.Loop();
             double x, y;
             GLFW.Glfw.GetCursorPosition(rlglBaseApp.window, out x, out y);
             textBox.Text = x + ", " + y;

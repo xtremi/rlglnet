@@ -26,7 +26,7 @@ void main()
     gl_Position = uVPmat * uMmat * vec4(pos, 1.0);
 
 	fragPos = pos;
-	vertColor = 0.7*color +  0.3*uColor;
+	vertColor = 0.4*color +  0.6*uColor;
 	oNormal = normal;
 		
     /*float distanceToLight = distance(pos.xyz, uLightPos);

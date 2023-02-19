@@ -15,6 +15,13 @@ namespace rlglnet
         private FocusCallback WindowFocusCallback;
 
         rlglRenderer renderer;
+        FPScontrol _fpsControl = new FPScontrol();
+
+        public double Fps()
+        {
+            return _fpsControl.CurrentFPSaverage;
+        }
+
         public Window window { get; private set; }
         private CameraControl cameraControl;
         private Camera camera;
@@ -42,8 +49,8 @@ namespace rlglnet
         {
             renderer = new rlglRenderer();
             _nNodesPerEdge = 64;
-            _meshBaseSize = 5000.0f;
-            _maxQuadTreeSubd = 5;
+            _meshBaseSize = 1500.0f;
+            _maxQuadTreeSubd = 7;
             terrainQuadTree = new rlglQuadTree(_meshBaseSize, _maxQuadTreeSubd);
             //terrainMeshObjects = new List<rlglTerrainMeshObject>();
 
@@ -162,6 +169,11 @@ namespace rlglnet
 
         public void Loop()
         {
+            if (!_fpsControl.Process())
+            {
+                return;
+            }
+
             // Swap fore/back framebuffers, and poll for operating system events.
             Glfw.SwapBuffers(window);
 

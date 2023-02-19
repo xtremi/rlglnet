@@ -6,7 +6,7 @@ namespace rlglnet
 {
     public class FPScontrol
     {
-        public double maxFPS { get; set; } = 60.0;
+        public double maxFPS { get; set; } = 120.0;
         double maxPeriod()
         {
             return 1.0 / maxFPS;
@@ -15,9 +15,14 @@ namespace rlglnet
         double _lastTime = 0.0;
         double _currentTime = 0.0;
         double _deltaTime = 0.0;
-        const int _nFramesCount = 20;
+        const int _nFramesCount = 60;
         double[] _fpsValues = new double[_nFramesCount];
         int _currentFrame = 0;
+
+        public double CurrentFPSaverage
+        {
+            get; private set;
+        }
 
         public bool Process()
         {
@@ -34,7 +39,7 @@ namespace rlglnet
                     {
                         sum += _fpsValues[i];
                     }
-                    double fpsAvg = sum / (double)_nFramesCount;
+                    CurrentFPSaverage = sum / (double)_nFramesCount;
                     _currentFrame = 0;
                 }
                 _lastTime = _currentTime;
