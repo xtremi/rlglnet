@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Diagnostics;
 
 using GLFW;
@@ -36,6 +35,7 @@ namespace rlglnet
         Terrain.rlglTerrainMeshManager terrainMeshManager;
         rlglQuadTree terrainQuadTree;
         rlglTerrainShader terrainShader;
+        rlglStandardShader standardShader;
 
         public string FrameStatLog { get; private set; }
 
@@ -106,9 +106,15 @@ namespace rlglnet
         {
             terrainShader = new rlglTerrainShader();
             terrainShader.Create(
-                "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\triangle.vert",
-                "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\triangle.frag");
-            terrainShader.Use();
+                "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\terrain.vert",
+                "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\terrain.frag");
+            //terrainShader.Use();
+
+            standardShader = new rlglStandardShader();
+            standardShader.Create(
+                "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\standard.vert",
+                "C:\\coding\\Csharp\\rlglnet\\data\\shaders\\standard.frag");
+            //standardShader.Use();
         }
         public void InitMeshes()
         {
@@ -122,6 +128,16 @@ namespace rlglnet
                 Terrain.rlglTerrainChunk terrainChunk = terrainMeshManager.GetTerrainChunk(quad.Center, quad.Size(), out isNew);
                 renderer.AddObject(terrainChunk.obj);
             }
+
+
+            rlglMeshQuad quadMesh = new rlglMeshQuad();
+            quadMesh.Init();
+            rlglStandardObject quadObj = new rlglStandardObject(quadMesh, standardShader);
+            renderer.AddObject(quadObj);
+
+            quadObj.ScaleVec = new vec3(100.0f);
+            quadObj.Position = new vec3(0.0f, 0.0f, 50.0f);
+
         }
 
         private int _lastNumberOfChunksGenerated = 0;
@@ -212,6 +228,9 @@ namespace rlglnet
             //Update shader uniforms:
             terrainShader.SetLightPosUniform(lightPos);
             terrainShader.SetVPmatrixUniform(currentCamera.VPmatrix());
+
+            standardShader.SetLightPosUniform(lightPos);
+            standardShader.SetVPmatrixUniform(currentCamera.VPmatrix());
 
             //Process key events:
             if (Glfw.GetKey(window, GLFW.Keys.Escape) == InputState.Press)

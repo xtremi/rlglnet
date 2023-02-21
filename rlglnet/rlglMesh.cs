@@ -43,7 +43,7 @@ namespace rlglnet
 
         protected struct VertexData
         {
-            public vec2 pos;
+            public vec3 pos;
             public vec3 normal;
             public vec3 color;
             public vec2 uv;
@@ -56,7 +56,7 @@ namespace rlglnet
         {
             VertexData[] vertexData = CreateVertexData();
             int[] elementIndices = CreateElementIndices();
-            _nElementsIndexed = elementIndices.Length / 3;
+            _nElementsIndexed = elementIndices.Length / 6;
             _indexed = true;
 
             VAO = glGenVertexArray();
@@ -101,5 +101,29 @@ namespace rlglnet
 
     }
 
+
+
+    public class rlglMeshQuad : rlglStandardMesh
+    {
+        protected override VertexData[] CreateVertexData()
+        {
+            vec3 normalVec = new vec3(0.0f, 0.0f, 1.0f);
+            vec3 colorVec = new vec3(1.0f, 0.0f, 1.0f);
+
+            return new VertexData[]
+            {
+                new VertexData{ pos = new vec3(-0.5f, -0.5f, 0.0f), uv = new vec2(0.0f, 0.0f), normal = normalVec, color = colorVec },
+                new VertexData{ pos = new vec3( 0.5f, -0.5f, 0.0f), uv = new vec2(1.0f, 0.0f), normal = normalVec, color = colorVec },
+                new VertexData{ pos = new vec3( 0.5f,  0.5f, 0.0f), uv = new vec2(1.0f, 1.0f), normal = normalVec, color = colorVec },
+                new VertexData{ pos = new vec3(-0.5f,  0.5f, 0.0f), uv = new vec2(0.0f, 1.0f), normal = normalVec, color = colorVec }
+            };
+        }
+        protected override int[] CreateElementIndices()
+        {
+            return new int[]{
+                0, 1, 2, 0, 2, 3
+            };
+        }
+    }
 
 }

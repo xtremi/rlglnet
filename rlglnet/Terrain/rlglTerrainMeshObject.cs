@@ -7,12 +7,24 @@
         }
         public override void SetShaderUniformValues()
         {
-            ((rlglTerrainShader)Shader).SetModelMatrixUniform(ModelMatrix);
-            ((rlglTerrainShader)Shader).SetColorUniform(new GlmNet.vec3(Color.x, Color.y, Color.z) );
+            ((rlglStandardShader)Shader).SetModelMatrixUniform(ModelMatrix);
+            ((rlglStandardShader)Shader).SetColorUniform(new GlmNet.vec3(Color.x, Color.y, Color.z) );
         }
 
     }
 
+    public class rlglStandardObject : rlglRenderableObject
+    {
+        public rlglStandardObject(rlglStandardMesh mesh, rlglStandardShader shader) : base(mesh, shader)
+        {
+        }
+        public override void SetShaderUniformValues()
+        {
+            ((rlglStandardShader)Shader).SetModelMatrixUniform(ModelMatrix);
+            ((rlglStandardShader)Shader).SetColorUniform(new GlmNet.vec3(Color.x, Color.y, Color.z));
+        }
+
+    }
 
 
 }

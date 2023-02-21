@@ -32,11 +32,13 @@ namespace rlglnet
             if (obj.Shader != previousShader)
             {
                 obj.Shader.Use();
+                previousShader = obj.Shader;
                 //obj.Shader.SetUniformValues();  //uniforms used for all object of shader --> this is not really needed
             }
             if (obj.Mesh != previousMesh)
             {
                 obj.Mesh.Bind();
+                previousMesh = obj.Mesh;
             }
             obj.SetShaderUniformValues();   //individual uniforms per object
 

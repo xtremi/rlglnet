@@ -10,13 +10,13 @@ namespace rlglnet
         public bool NeedModelMatrixCalc { get; private set; } = false;
 
 
-        public rlglObject()
-        {
-        }
-        private GlmNet.vec3 _scaleVec;
-        private GlmNet.vec3 _position;
-        private GlmNet.vec3 _rotAxis;
-        private float _rotAngle;
+        public rlglObject(){}
+        private GlmNet.vec3 _scaleVec = new GlmNet.vec3(1.0f);
+        private GlmNet.vec3 _position = new GlmNet.vec3(0.0f);
+        private GlmNet.vec3 _rotAxis = new GlmNet.vec3(0.0f, 0.0f, 1.0f);
+        private GlmNet.mat4 _modelMatrix = new GlmNet.mat4(1.0f);
+
+        private float _rotAngle = 0.0f;
         public GlmNet.vec3 ScaleVec
         {
             get { return _scaleVec; }
@@ -53,7 +53,6 @@ namespace rlglnet
             }
         }
 
-        private GlmNet.mat4 _modelMatrix = new GlmNet.mat4(1.0f);
         public GlmNet.mat4 ModelMatrix { 
             get {
                 if (NeedModelMatrixCalc)
