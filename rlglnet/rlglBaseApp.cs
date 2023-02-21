@@ -126,7 +126,7 @@ namespace rlglnet
             {
                 bool isNew;
                 Terrain.rlglTerrainChunk terrainChunk = terrainMeshManager.GetTerrainChunk(quad.Center, quad.Size(), out isNew);
-                renderer.AddObject(terrainChunk.obj);
+                //renderer.AddObject(terrainChunk.obj);
             }
 
 
@@ -163,7 +163,7 @@ namespace rlglnet
             {
                 bool isNewChunk;
                 Terrain.rlglTerrainChunk chunk = terrainMeshManager.GetTerrainChunk(quad.Center, quad.Size(), out isNewChunk);
-                renderer.AddObject(chunk.obj);
+                //renderer.AddObject(chunk.obj);
                 if (isNewChunk) nNewChunks++;
             }
             if (nNewChunks > 0) _lastNumberOfChunksGenerated = nNewChunks;
@@ -202,7 +202,7 @@ namespace rlglnet
 
         public void Loop()
         {
-            var fullLoopTime = System.Diagnostics.Stopwatch.StartNew();
+            var fullLoopTime = Stopwatch.StartNew();
             FrameStatLog = "";
 
             if (!_fpsControl.Process())
@@ -226,9 +226,11 @@ namespace rlglnet
             vec3 lightPos = new vec3(lightPosRad * glm.sin(lightPosSpeed * (float)frameCounter), lightPosRad * glm.cos(lightPosSpeed * (float)frameCounter), lightPosHeight);
 
             //Update shader uniforms:
+            terrainShader.Use();
             terrainShader.SetLightPosUniform(lightPos);
             terrainShader.SetVPmatrixUniform(currentCamera.VPmatrix());
 
+            standardShader.Use();
             standardShader.SetLightPosUniform(lightPos);
             standardShader.SetVPmatrixUniform(currentCamera.VPmatrix());
 
